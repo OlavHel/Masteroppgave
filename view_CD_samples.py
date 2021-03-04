@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 rho = 0.8
-dict = pickle.load(open("CD_samples/fiduc2081000.p","rb"))
+dict = pickle.load(open("CD_samples/fiduc20991000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]
