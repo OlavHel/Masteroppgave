@@ -137,7 +137,7 @@ def loccond(theta, x, n, X, Y):
 
 
 if __name__ == "__main__":
-    if True:
+    if False:
         poster = Posterior("fiduc_2",lam=10**(-4)).distribution
         distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster)
 
@@ -192,7 +192,7 @@ if __name__ == "__main__":
         plt.show()
 
     elif True:
-        poster = Posterior("fiduc_2",lam=10**(-4)).distribution
+        poster = Posterior("fiduc_infty",lam=10**(-4)).distribution
         distr = lambda x, n, T1, T2: posterior_distr(x, n, T1, T2, poster)
 
         n = 3
@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
         X, Y = gen_data(n,rho)
 
-        samples = one_simulation(m, n, X, Y,distr,s2,start)
+        samples = one_simulation(m, n, X, Y, distr,s2,start)
 
         def sym_test(samples, median = None):
             if median is None:

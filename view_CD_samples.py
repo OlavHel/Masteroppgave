@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-rho = 0.8
-dict = pickle.load(open("CD_samples/fiduc20991000.p","rb"))
+rho = 0.5
+dict = pickle.load(open("CD_samples/fiduc2051000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]
@@ -27,6 +27,8 @@ print("Mean var:", np.mean(properties[:,1]))
 print("Mean MSE", np.mean(properties[:,1]+properties[:,0]**2+0.0**2-2*0.0*properties[:,0]))
 
 print("Mean z_var:", np.mean(properties[:,7]+2*rho*properties[:,6]-rho**2-properties[:,6]**2))
+print("Mean w_var:", np.mean(properties[:,9]+2*rho*properties[:,8]-rho**2-properties[:,8]**2))
+print("Mean f_var:", np.mean(properties[:,11]+2*rho*properties[:,10]-rho**2-properties[:,10]**2))
 
 n = len(samples)
 
