@@ -81,7 +81,7 @@ def one_simulate_2(X, Y, sample_size, n_MCMC):
     S1 = np.sum((X+Y)**2)
     S2 = np.sum((X-Y)**2)
 
-    u = np.random.chisquare(sample_size, n_MCMC)
+    u = np.random.chisquare(sample_size, n_MCMC) # fix so that drop when below S/4 and generate new samples
     v = np.random.chisquare(sample_size, n_MCMC)
 
     eta = u/v*S1/S2
@@ -237,6 +237,7 @@ if __name__ == "__main__":
 #        pdfs = 2*gamma(n)/(gamma(n/2)**2)*(S2/S1*(1+rhos)/(1-rhos))**(n/2-1)/(S2/S1*(1+rhos)/(1-rhos)+1)**(n)*1/(1-rhos)**2*S2/S1
 #        plt.plot(rhos,pdfs)
         plt.show()
+
 
 
 

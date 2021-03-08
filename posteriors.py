@@ -61,7 +61,7 @@ class Posterior:
         S1 = T1+2*T2
         S2 = T1-2*T2
 
-        return (S1**2*(1+rho)**(-2)+S2**2*(1-rho)**(-2))*(1-rho**2)**(-n/2)*np.exp(-1/4*(S1/(1+rho)+S2/(1-rho)))
+        return np.sqrt(S1**2*(1+rho)**(-2)+S2**2*(1-rho)**(-2))*(1-rho**2)**(-n/2)*np.exp(-1/4*(S1/(1+rho)+S2/(1-rho)))
 
     def fiducial_infinity(self, rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
