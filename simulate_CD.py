@@ -76,12 +76,24 @@ def mult_simulate_1(n_samples, sample_size, n_MCMC, rho):
     return all_samples, properties
 
 
+def sim_bound_chi2(lower,df,n,round = 0):
+    samples = np.random.chisquare(df, n)
+    samples = samples[samples > lower]
+
+    while len(samples) < n:
+        extra_samples = np.random.chisquare(df, n-len(samples))
+        samples = np.concatenate((samples,extra_samples))
+        samples = samples[samples > lower]
+    return samples
+
 def one_simulate_2(X, Y, sample_size, n_MCMC):
     ## simulate from the CF of rho given 2 unknown variables (common variance + correlation)
     S1 = np.sum((X+Y)**2)
     S2 = np.sum((X-Y)**2)
 
-    u = np.random.chisquare(sample_size, n_MCMC) # fix so that drop when below S/4 and generate new samples
+    #u = sim_bound_chi2(S2/4, sample_size, n_MCMC)
+    u = np.random.chisquare(sample_size, n_MCMC)
+    #v = sim_bound_chi2(S1/4, sample_size, n_MCMC)
     v = np.random.chisquare(sample_size, n_MCMC)
 
     eta = u/v*S1/S2
@@ -131,11 +143,11 @@ def mult_simulate_2(n_samples, sample_size, n_MCMC, rho):
 
 
 if __name__ == "__main__":
-    if False:
+    if True:
         import pickle
 
         n = 3
-        rho = 0.0
+        rho = 0.5
 
         m = 100000
         s2 = 0.01
@@ -149,7 +161,7 @@ if __name__ == "__main__":
         pickle.dump({
             "samples": samples,
             "properties": properties
-            }, open("CD_samples/CD2001000.p", "wb"))
+            }, open("CD_samples/CD3051000.p", "wb"))
 
         risks = np.mean(properties, axis=0)
         risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",
@@ -187,6 +199,23 @@ if __name__ == "__main__":
         plt.plot(alphas, alphas, label="linear")
         plt.legend()
         plt.show()
+    elif True:
+        n = 3
+        rho = 0.5
+
+        m = 1000000
+        s2 = 0.01
+        start = 0
+
+        X, Y = gen_data(n, rho)
+
+        print("S_1", np.sum((X + Y) ** 2), "S_2", np.sum((X - Y) ** 2))
+
+        samples = one_simulate_2(X, Y, n, m)
+
+        plt.figure(1)
+        plt.hist(samples, bins = 100, density = True)
+        plt.show()
 
     elif True:
         n = 3
@@ -200,7 +229,7 @@ if __name__ == "__main__":
 
         print("S_1",np.sum((X+Y)**2),"S_2",np.sum((X-Y)**2))
 
-        samples = one_simulate_1(X, Y, n, m)
+        samples = one_simulate_2(X, Y, n, m)
 
         def sym_test(samples, median = None):
             if median is None:
