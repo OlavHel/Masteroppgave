@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from scipy.stats import gamma
+from scipy.optimize import fsolve, bisect, brentq, toms748
 
 
 if False:
@@ -66,29 +67,10 @@ elif False:
     confs_lower = np.array(
         [np.sum(S2 <= g(S1/(2*(1+rho)),a)) / n_samples for a in cums])
 
-#    confs_both = np.array(
-#        [
-#            np.sum( (rho <= (np.quantile(ratios, 1/2+alpha/2)*S1-S2)/(np.quantile(ratios, 1/2+alpha/2)*S1+S2) ) &
-#                    (rho > (np.quantile(ratios, 1/2-alpha/2)*S1-S2)/(np.quantile(ratios, 1/2-alpha/2)*S1+S2) ) )/n_samples for alpha in alphas
-#        ]
-#    )
-
-#    confs_both = np.array(
-#        [
-#            np.sum((rho <= (np.quantile(ratios, alphas[np.where(confs_lower >= (1+alpha)/2)[0][0]]) * S1 - S2) / (
-#                        np.quantile(ratios, alphas[np.where(confs_lower >= (1+alpha)/2)[0][0]]) * S1 + S2)) &
-#                   (rho > (np.quantile(ratios, alphas[np.where(confs_lower >= (1-alpha)/2)[0][0]]) * S1 - S2) / (
-#                               np.quantile(ratios, alphas[np.where(confs_lower >= (1-alpha)/2)[0][0]]) * S1 + S2))) / n_samples
-#            for alpha in np.linspace(0,1,100)
-#        ]
-#    )
-
     plt.figure()
     plt.plot(alphas, alphas)
     plt.plot(alphas, confs_lower)
     plt.plot(alphas, confs_upper)
-#    plt.plot(alphas, -0.1*np.sin(alphas*2*np.pi))
-#    plt.plot(np.linspace(0,1,100), confs_both)
     plt.show()
 
 elif False:
@@ -155,7 +137,7 @@ elif False:
     plt.plot(alphas, confs_lower)
     plt.show()
 
-elif True:
+elif False:
     rho = 0.0
     n = 3
     n_samples = 100000
@@ -191,7 +173,7 @@ elif True:
     plt.plot(alphas, confs_upper)
     plt.show()
 
-elif True:
+elif False:
     rho = -0.3
     n = 3
     n_samples = 100000
@@ -227,5 +209,131 @@ elif True:
 #    plt.plot(alphas, confs_upper)
     plt.show()
 
+
+elif False:
+    rho = 0.0
+    n = 3
+    n_samples = 10000
+    n_MCMC = 100000
+
+    S1 = np.random.gamma(shape=n / 2, scale=4 * (1 + rho), size=n_samples)
+    S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
+
+    samples = np.empty(n_samples)
+    for i in range(n_samples):
+        if i%100 == 0:
+            print(i)
+        U1 = np.random.chisquare(n, size=n_MCMC)
+        U2 = np.random.chisquare(n, size=n_MCMC)
+
+        rhos = (S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)
+        samples[i] = np.sum(rhos < rho)/n_MCMC
+
+#        plt.figure(2)
+#        plt.hist(rhos, bins=100, density=True)
+#        plt.show()
+
+    alphas = np.linspace(0,1,100)
+
+
+    confs_lower = np.array(
+        [np.sum(samples < alpha) / n_samples for alpha in alphas])
+
+    plt.figure()
+    plt.plot(alphas, alphas)
+    plt.plot(alphas, confs_lower)
+    plt.show()
+
+
+elif False:
+    rho = 0.0
+    n = 3
+    n_samples = 10000
+    n_MCMC = 100000
+
+    S1 = np.random.gamma(shape=n / 2, scale=4 * (1 + rho), size=n_samples)
+    S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
+
+    samples = np.empty(n_samples)
+    for i in range(n_samples):
+        if i%100 == 0:
+            print(i)
+        U1 = np.random.chisquare(n, size=n_MCMC)
+        U2 = np.random.chisquare(n, size=n_MCMC)
+
+        beta = U2*S1[i]**2/(2*S2[i]*U1**2)
+
+        rhos = -(2+beta)/2+np.sqrt((2+beta)**2/2**2-1+beta)
+        samples[i] = np.sum(rhos < rho)/n_MCMC
+
+        plt.figure(2)
+        plt.hist(rhos, bins=100, density=True)
+        plt.show()
+
+    alphas = np.linspace(0,1,100)
+
+
+    confs_lower = np.array(
+        [np.sum(samples < alpha) / n_samples for alpha in alphas])
+
+    plt.figure()
+    plt.plot(alphas, alphas)
+    plt.plot(alphas, confs_lower)
+    plt.show()
+
+
+elif True:
+    rho = 0.0
+    n = 3
+    n_samples = 1000
+    n_MCMC = 100000
+
+    S1 = np.random.gamma(shape=n / 2, scale=4 * (1 + rho), size=n_samples)
+    S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
+
+    def f_inv(y,x):
+        return np.tanh(y-x)#y/x**5
+
+    def func_to_solve(x,S1,S2,U1,U2):
+        if x == 1:
+            return np.infty
+        elif x == -1:
+            return -np.infty
+        return f_inv(S2/(2*(1-x)),S1/(2*(1+x)))-f_inv(U2,U1)
+
+    samples = np.empty(n_samples)
+    start_time = time.time()
+    last_time = start_time
+    for i in range(n_samples):
+        print(i)
+        print("Time of last set:",time.time()-last_time,"Total time elapse:", time.time()-start_time)
+        last_time = time.time()
+        U1 = np.random.chisquare(n, size=n_MCMC)
+        U2 = np.random.chisquare(n, size=n_MCMC)
+
+        rhos = np.array([
+            brentq(func_to_solve, -1, 1, args=(S1[i],S2[i],U1[j],U2[j])) for j in range(n_MCMC)
+            #fsolve(func_to_solve, 0, args=(S1[i],S2[i],U1[j],U2[j]), fprime=f_inv_prime) for j in range(n_MCMC)
+        ]) # MÅ FINNE LØSNING HER
+        samples[i] = np.sum(rhos < rho)/n_MCMC
+
+        print("Mean",np.mean(rhos), "var",np.var(rhos), "MSE:",np.mean((rhos-rho)**2))
+
+        plt.figure(2)
+        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
+        plt.hist(rhos, bins=100, density=True)
+        plt.hist((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1), bins=100, density=True, histtype="step")
+        plt.show()
+
+    alphas = np.linspace(0,1,100)
+
+
+    confs_lower = np.array(
+        [np.sum(samples < alpha) / n_samples for alpha in alphas])
+
+    plt.figure()
+    plt.plot(alphas, alphas)
+    plt.plot(alphas, confs_lower)
+    plt.show()
 
 
