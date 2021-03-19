@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import time
 from scipy.stats import gamma
 from scipy.optimize import fsolve, bisect, brentq, toms748
+from loss_functions import *
+import pickle
 
 
 if False:
@@ -292,7 +294,7 @@ elif True:
     S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
 
     def f_inv(y,x):
-        return np.tanh(y-x)#y/x**5
+        return y**1-x**1#y**1+x**(-1)
 
     def func_to_solve(x,S1,S2,U1,U2):
         if x == 1:
@@ -301,7 +303,9 @@ elif True:
             return -np.infty
         return f_inv(S2/(2*(1-x)),S1/(2*(1+x)))-f_inv(U2,U1)
 
-    samples = np.empty(n_samples)
+    properties = np.empty((n_samples, 12))
+
+    all_samples = np.empty(n_samples)
     start_time = time.time()
     last_time = start_time
     for i in range(n_samples):
@@ -311,25 +315,53 @@ elif True:
         U1 = np.random.chisquare(n, size=n_MCMC)
         U2 = np.random.chisquare(n, size=n_MCMC)
 
-        rhos = np.array([
+        samples = np.array([
             brentq(func_to_solve, -1, 1, args=(S1[i],S2[i],U1[j],U2[j])) for j in range(n_MCMC)
             #fsolve(func_to_solve, 0, args=(S1[i],S2[i],U1[j],U2[j]), fprime=f_inv_prime) for j in range(n_MCMC)
         ]) # MÅ FINNE LØSNING HER
-        samples[i] = np.sum(rhos < rho)/n_MCMC
+        all_samples[i] = np.sum(samples < rho)/n_MCMC
 
-        print("Mean",np.mean(rhos), "var",np.var(rhos), "MSE:",np.mean((rhos-rho)**2))
+        properties[i,:] = np.array([
+            np.mean(samples),
+            np.var(samples),
+            MAE(samples,rho),
+            MSE(samples,rho),
+            np.mean(fisher_information_metric(samples,rho)),
+            np.mean(kullback_leibler(samples,rho)),
+            z_transMean(samples),
+            z_transMSE(samples,rho),
+            w_transMean(samples),
+            w_transMSE(samples, rho),
+            fishMean(samples),
+            fishMSE(samples,rho)
+        ])
 
-        plt.figure(2)
-        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
-        plt.hist(rhos, bins=100, density=True)
-        plt.hist((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1), bins=100, density=True, histtype="step")
-        plt.show()
+#        plt.figure(2)
+#        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
+#        plt.hist(np.arctanh(samples), bins=100, density=True)
+#        plt.hist(np.arctanh((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step")
+#        plt.show()
 
     alphas = np.linspace(0,1,100)
 
+    pickle.dump({
+        "samples": samples,
+        "properties": properties
+    }, open("CD_samples/regtest1001000.p", "wb")
+    )
+
+    risks = np.mean(properties, axis=0)
+    risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",
+                  "Mean z_MSE:", "Mean w_mean:", "Mean w_MSE:", "Mean f_mean:", "Mean f_MSE:"]
+    print("")
+
+    for i in range(len(risks)):
+        print(risk_names[i], risks[i])
+    print("")
+
 
     confs_lower = np.array(
-        [np.sum(samples < alpha) / n_samples for alpha in alphas])
+        [np.sum(all_samples < alpha) / n_samples for alpha in alphas])
 
     plt.figure()
     plt.plot(alphas, alphas)
