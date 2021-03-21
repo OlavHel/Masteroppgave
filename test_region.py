@@ -285,7 +285,7 @@ elif False:
 
 
 elif True:
-    rho = 0.0
+    rho = 0.5
     n = 3
     n_samples = 1000
     n_MCMC = 100000
@@ -294,7 +294,14 @@ elif True:
     S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
 
     def f_inv(y,x):
-        return y**1-x**1#y**1+x**(-1)
+        return y**(1/2)-x**(1/2)#y/x**5
+
+    def dist_func(S1, S2, U1, U2):
+        a = U2-U1
+        b1 = (S1+S2)/2
+        b2 = (S2-S1)/2
+
+        return -b1/(2*a)+1/(2*a)*np.sqrt(b1**2+4*a*(a-b2))
 
     def func_to_solve(x,S1,S2,U1,U2):
         if x == 1:
@@ -303,9 +310,9 @@ elif True:
             return -np.infty
         return f_inv(S2/(2*(1-x)),S1/(2*(1+x)))-f_inv(U2,U1)
 
+    all_samples = np.empty(n_samples)
     properties = np.empty((n_samples, 12))
 
-    all_samples = np.empty(n_samples)
     start_time = time.time()
     last_time = start_time
     for i in range(n_samples):
@@ -336,18 +343,22 @@ elif True:
             fishMSE(samples,rho)
         ])
 
-#        plt.figure(2)
-#        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
-#        plt.hist(np.arctanh(samples), bins=100, density=True)
+        print("Mean",np.mean(samples), "var",np.var(samples), "MSE:",np.mean((samples-rho)**2))
+
+        plt.figure(2)
+        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
+        plt.axvline(x=np.arctanh(rho), color="green")
+        plt.hist(np.arctanh(samples), bins=100, density=True)
+        plt.hist(np.arctanh(dist_func(S1[i],S2[i],U1,U2)), bins=100, density=True, histtype="step")
 #        plt.hist(np.arctanh((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step")
-#        plt.show()
+        plt.show()
 
     alphas = np.linspace(0,1,100)
 
     pickle.dump({
-        "samples": samples,
+        "samples": all_samples,
         "properties": properties
-    }, open("CD_samples/regtest1001000.p", "wb")
+    }, open("CD_samples/regtest12001000.p", "wb")
     )
 
     risks = np.mean(properties, axis=0)
@@ -359,7 +370,6 @@ elif True:
         print(risk_names[i], risks[i])
     print("")
 
-
     confs_lower = np.array(
         [np.sum(all_samples < alpha) / n_samples for alpha in alphas])
 
@@ -368,4 +378,82 @@ elif True:
     plt.plot(alphas, confs_lower)
     plt.show()
 
+elif True:
+    rho = 0.8
+    n = 3
+    n_samples = 1000
+    n_MCMC = 100000
 
+    def dist_func(S1, S2, U1, U2):
+        a = U2-U1
+        b1 = (S1+S2)/2
+        b2 = (S2-S1)/2
+
+        return -b1/(2*a)+1/(2*a)*np.sqrt(b1**2+4*a*(a-b2))
+
+    S1 = np.random.gamma(shape=n / 2, scale=4 * (1 + rho), size=n_samples)
+    S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
+
+    all_samples = np.empty(n_samples)
+    properties = np.empty((n_samples, 12))
+
+    start_time = time.time()
+    last_time = start_time
+    for i in range(n_samples):
+        if i%100==0:
+            print(i)
+            print("Time of last set:",time.time()-last_time,"Total time elapse:", time.time()-start_time)
+            last_time = time.time()
+        U1 = np.random.chisquare(n, size=n_MCMC)
+        U2 = np.random.chisquare(n, size=n_MCMC)
+
+        samples = dist_func(S1[i], S2[i], U1, U2)
+        all_samples[i] = np.sum(samples < rho)/n_MCMC
+
+        properties[i,:] = np.array([
+            np.mean(samples),
+            np.var(samples),
+            MAE(samples,rho),
+            MSE(samples,rho),
+            np.mean(fisher_information_metric(samples,rho)),
+            np.mean(kullback_leibler(samples,rho)),
+            z_transMean(samples),
+            z_transMSE(samples,rho),
+            w_transMean(samples),
+            w_transMSE(samples, rho),
+            fishMean(samples),
+            fishMSE(samples,rho)
+        ])
+
+#        print("Mean",np.mean(samples), "var",np.var(samples), "MSE:",np.mean((samples-rho)**2))
+
+#        plt.figure(2)
+#        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
+#        plt.hist(samples, bins=100, density=True)
+#        plt.hist((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1), bins=100, density=True, histtype="step")
+#        plt.show()
+
+    alphas = np.linspace(0,1,100)
+
+    pickle.dump({
+        "samples": all_samples,
+        "properties": properties
+    }, open("CD_samples/regtest1081000.p", "wb")
+    )
+
+    risks = np.mean(properties, axis=0)
+    risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",
+                  "Mean z_MSE:", "Mean w_mean:", "Mean w_MSE:", "Mean f_mean:", "Mean f_MSE:"]
+    print("")
+
+    for i in range(len(risks)):
+        print(risk_names[i], risks[i])
+    print("")
+
+    confs_lower = np.array(
+        [np.sum(all_samples < alpha) / n_samples for alpha in alphas])
+
+    plt.figure()
+    plt.plot(alphas, alphas)
+    plt.plot(alphas, confs_lower)
+    plt.show()
