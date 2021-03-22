@@ -198,9 +198,12 @@ if __name__ == "__main__":
 
         X, Y = gen_data(n, rho)
 
-        print("S_1",np.sum((X+Y)**2),"S_2",np.sum((X-Y)**2))
+        S1 = np.sum((X+Y)**2)
+        S2 = np.sum((X-Y)**2)
 
-        samples = one_simulate_1(X, Y, n, m)
+        print("S_1",S1,"S_2",S2)
+
+        samples = one_simulate_2(X, Y, n, m)
 
         def sym_test(samples, median = None):
             if median is None:
@@ -214,7 +217,7 @@ if __name__ == "__main__":
 
             plt.show()
 
-        f_samples = np.arctanh(samples)#fisher_information(samples)
+        f_samples = 2*np.arctanh(samples)#fisher_information(samples)
         f_mean = np.mean(f_samples)
         f_var = np.var(f_samples)
         f_median = np.median(f_samples)
@@ -223,13 +226,18 @@ if __name__ == "__main__":
 
         print(np.sum(f_samples-f_median))
 
+        print((S1-S2)/(S2+S1),2*np.sum(X*Y)/np.sum(X**2+Y**2))
 
         plt.figure(2)
 #        plt.hist(1/2*np.log((1+samples)/(1-samples)), density=True, bins=100)
-        plt.hist(f_samples, density=True, bins=100)
+        plt.hist(samples, density = True, bins = 100)
+#        plt.hist(f_samples, density=True, bins=100)
         plt.axvline(x = fisher_information(rho), color = "green")
         plt.axvline(x = f_mean, color = "red")
         plt.axvline(x = f_median, color = "yellow")
+#        plt.axvline(x = np.log(S1/S2),color="green")
+#        plt.axvline(x = (S1-S2)/(S2+S1), color="green")
+#        plt.axvline(x = np.median(samples), color="red")
 
 #        rhos = np.linspace(-0.99, 0.99, 100)
 #        S1 = np.sum((X+Y)**2)

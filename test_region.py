@@ -284,17 +284,19 @@ elif False:
     plt.show()
 
 
-elif True:
+elif False:
     rho = 0.5
     n = 3
     n_samples = 1000
     n_MCMC = 100000
 
+    b = 10
+
     S1 = np.random.gamma(shape=n / 2, scale=4 * (1 + rho), size=n_samples)
     S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
 
     def f_inv(y,x):
-        return y**(1/2)-x**(1/2)#y/x**5
+        return y**(b)-x**(b)#y/x**5
 
     def dist_func(S1, S2, U1, U2):
         a = U2-U1
@@ -324,8 +326,7 @@ elif True:
 
         samples = np.array([
             brentq(func_to_solve, -1, 1, args=(S1[i],S2[i],U1[j],U2[j])) for j in range(n_MCMC)
-            #fsolve(func_to_solve, 0, args=(S1[i],S2[i],U1[j],U2[j]), fprime=f_inv_prime) for j in range(n_MCMC)
-        ]) # MÅ FINNE LØSNING HER
+        ])
         all_samples[i] = np.sum(samples < rho)/n_MCMC
 
         properties[i,:] = np.array([
@@ -350,7 +351,7 @@ elif True:
         plt.axvline(x=np.arctanh(rho), color="green")
         plt.hist(np.arctanh(samples), bins=100, density=True)
         plt.hist(np.arctanh(dist_func(S1[i],S2[i],U1,U2)), bins=100, density=True, histtype="step")
-#        plt.hist(np.arctanh((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step")
+        plt.hist(np.arctanh((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step")
         plt.show()
 
     alphas = np.linspace(0,1,100)
@@ -378,7 +379,7 @@ elif True:
     plt.plot(alphas, confs_lower)
     plt.show()
 
-elif True:
+elif False:
     rho = 0.8
     n = 3
     n_samples = 1000
@@ -439,6 +440,111 @@ elif True:
         "samples": all_samples,
         "properties": properties
     }, open("CD_samples/regtest1081000.p", "wb")
+    )
+
+    risks = np.mean(properties, axis=0)
+    risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",
+                  "Mean z_MSE:", "Mean w_mean:", "Mean w_MSE:", "Mean f_mean:", "Mean f_MSE:"]
+    print("")
+
+    for i in range(len(risks)):
+        print(risk_names[i], risks[i])
+    print("")
+
+    confs_lower = np.array(
+        [np.sum(all_samples < alpha) / n_samples for alpha in alphas])
+
+    plt.figure()
+    plt.plot(alphas, alphas)
+    plt.plot(alphas, confs_lower)
+    plt.show()
+
+
+
+elif True:
+    rho = 0.5
+    n = 3
+    n_samples = 1000
+    n_MCMC = 100000
+
+    S1 = np.random.gamma(shape=n / 2, scale=4 * (1 + rho), size=n_samples)
+    S2 = np.random.gamma(shape=n / 2, scale=4 * (1 - rho), size=n_samples)
+
+    def dist_func(S1, S2, U1, U2):
+        a = U2-U1
+        b1 = (S1+S2)/2
+        b2 = (S2-S1)/2
+
+        return -b1/(2*a)+1/(2*a)*np.sqrt(b1**2+4*a*(a-b2))
+
+    def spes_func(S1, S2, U1, U2):
+        temp = (S1+S2)/4
+        ret_vals = np.empty(len(U1))
+        ret_vals[(U1 <= temp) & (U2 <= temp)] = (S1-S2)/(S1+S2)
+
+        U2_big = (U2 > U1) & (U2 > temp)
+        ret_vals[U2_big] = 1-1/2*S2/U2[U2_big]
+
+        U1_big = (U1 > U2) & (U1 > temp)
+        ret_vals[U1_big] = 1/2*S1/U1[U1_big]-1
+
+        return ret_vals
+
+    all_samples = np.empty(n_samples)
+    properties = np.empty((n_samples, 12))
+
+    start_time = time.time()
+    last_time = start_time
+    for i in range(n_samples):
+        if i%100==0:
+            print(i)
+            print("Time of last set:",time.time()-last_time,"Total time elapse:", time.time()-start_time)
+            last_time = time.time()
+        U1 = np.random.chisquare(n, size=n_MCMC)
+        U2 = np.random.chisquare(n, size=n_MCMC)
+
+        samples = spes_func(S1[i], S2[i], U1, U2)#np.array([spes_func(S1[i], S2[i], U1[j], U2[j]) for j in range(n_MCMC)])
+        all_samples[i] = np.sum(samples < rho)/n_MCMC
+
+        properties[i,:] = np.array([
+            np.mean(samples),
+            np.var(samples),
+            MAE(samples,rho),
+            MSE(samples,rho),
+            np.mean(fisher_information_metric(samples,rho)),
+            np.mean(kullback_leibler(samples,rho)),
+            z_transMean(samples),
+            z_transMSE(samples,rho),
+            w_transMean(samples),
+            w_transMSE(samples, rho),
+            fishMean(samples),
+            fishMSE(samples,rho)
+        ])
+
+#        print("Mean",np.mean(samples), "var",np.var(samples), "MSE:",np.mean((samples-rho)**2))
+
+        trans = lambda x: 2*np.arctanh(x)
+
+        lim = gamma.cdf((S1[i]+S2[i])/4, n/2, scale=2)
+
+        plt.figure(2)
+        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
+        plt.ylim((0,2))
+        plt.axvline(x=trans(rho), color="green")
+        plt.hist(trans(samples), bins=100, density=True)
+        plt.hist(trans(dist_func(S1[i],S2[i],U1,U2)), bins=100, density=True, histtype="step")
+        plt.hist(trans((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step")
+        plt.axvline(x=trans((S1[i]-S2[i])/(S1[i]+S2[i])),ymin=0,ymax=lim**2,color="red")
+        plt.hist(np.log(S1[i]/(4*U1[U1>(S1[i]+S2[i])/8]-1/2*S1[i])), bins=100, density=True, histtype="step",color="red")
+        plt.hist(-np.log(S2[i]/(4*U2[U2>(S1[i]+S2[i])/8]-1/2*S2[i])), bins=100, density=True, histtype="step",color="red")
+        plt.show()
+
+    alphas = np.linspace(0,1,100)
+
+    pickle.dump({
+        "samples": all_samples,
+        "properties": properties
+    }, open("CD_samples/regtest12001000.p", "wb")
     )
 
     risks = np.mean(properties, axis=0)
