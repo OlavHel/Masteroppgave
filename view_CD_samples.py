@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 rho = 0.0
-dict = pickle.load(open("CD_samples/CD3001000.p","rb"))
+dict = pickle.load(open("CD_samples/CD2001000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]
