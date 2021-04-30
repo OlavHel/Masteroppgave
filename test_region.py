@@ -786,12 +786,14 @@ elif True:
             print(i)
             print("Time of last set:",time.time()-last_time,"Total time elapse:", time.time()-start_time)
             last_time = time.time()
-        X, Y = np.random.multivariate_normal(mean=np.array([0,0]), cov=np.array([[1,rho],[rho,1]]))
+        X = np.random.multivariate_normal(mean=np.array([0,0]), cov=np.array([[1,rho],[rho,1]]), size=n)
 
-        U1 = np.random.chisquare(n, size=n_MCMC)
-        U2 = np.random.chisquare(n, size=n_MCMC)
+        Z = np.random.chisquare(n, size=(n, n_MCMC))
 
-        samples = spes_func(S1[i], S2[i], U1, U2)#np.array([spes_func(S1[i], S2[i], U1[j], U2[j]) for j in range(n_MCMC)])
+        XY_sum = np.sum(1/(X[:,0]-X[:,1]))
+        print(XY_sum)
+
+        samples = np.sqrt(1-XY_sum*np.sum(1/Z,axis=0))
         all_samples[i] = np.sum(samples < rho)/n_MCMC
 
         properties[i,:] = np.array([
@@ -813,18 +815,10 @@ elif True:
 
         trans = lambda x: 2*np.arctanh(x)
 
-        lim = gamma.cdf((S1[i]+S2[i])/4, n/2, scale=2)
-
         plt.figure(2)
-        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
         plt.ylim((0,2))
         plt.axvline(x=trans(rho), color="green")
         plt.hist(trans(samples), bins=100, density=True)
-        plt.hist(trans(dist_func(S1[i],S2[i],U1,U2)), bins=100, density=True, histtype="step")
-        plt.hist(trans((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step")
-        plt.axvline(x=trans((S1[i]-S2[i])/(S1[i]+S2[i])),ymin=0,ymax=lim**2,color="red")
-        plt.hist(np.log(S1[i]/(4*U1[U1>(S1[i]+S2[i])/8]-1/2*S1[i])), bins=100, density=True, histtype="step",color="red")
-        plt.hist(-np.log(S2[i]/(4*U2[U2>(S1[i]+S2[i])/8]-1/2*S2[i])), bins=100, density=True, histtype="step",color="red")
         plt.show()
 
     alphas = np.linspace(0,1,100)
