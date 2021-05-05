@@ -7,7 +7,50 @@ from loss_functions import *
 import pickle
 
 
-if False:
+def dist_func(S1, S2, U1, U2):
+    a = U2 - U1
+    b1 = (S1 + S2) / a
+    b2 = (S2 - S1) / a
+
+    return -b1 / 4 + np.sign(a) * 1 / 4 * np.sqrt(b1 ** 2 + 16 * (1 - b2 / 2))
+
+def sim_pivot_diff(X, Y, n, m):
+    U1 = np.random.chisquare(n, size=m)
+    U2 = np.random.chisquare(n, size=m)
+
+    S1 = np.sum((X+Y)**2)
+    S2 = np.sum((X-Y)**2)
+
+    return dist_func(S1, S2, U1, U2)
+
+def sim_any_pivot_g(X, Y, n, m, g):
+    def f_inv(y, x):
+        return g(y) - g(x)
+
+    def func_to_solve(x,S1,S2,a):
+        if x >= 1:
+            return np.infty
+        elif x <= -1:
+            return -np.infty
+        return f_inv(S2/(2*(1-x)),S1/(2*(1+x)))-a
+
+    U1 = np.random.chisquare(n, size=m)
+    U2 = np.random.chisquare(n, size=m)
+
+    S1 = np.sum((X+Y)**2)
+    S2 = np.sum((X-Y)**2)
+
+    samples = np.array([
+        brentq(func_to_solve, -1, 1, args=(S1, S2, f_inv(U2[j], U1[j]))) for j in range(m)
+    ])
+
+    return samples
+
+
+
+if not __name__ == "__main__":
+    pass
+elif False:
     rho = 0.5
     n = 3
     n_samples = 100000
@@ -284,7 +327,7 @@ elif False:
     plt.show()
 
 
-elif False:
+elif True:
     from math import log, exp
     rho = 0.5
     n = 3
@@ -323,6 +366,7 @@ elif False:
         print(i)
         print("Time of last set:",time.time()-last_time,"Total time elapse:", time.time()-start_time)
         last_time = time.time()
+
         U1 = np.random.chisquare(n, size=n_MCMC)
         U2 = np.random.chisquare(n, size=n_MCMC)
 
@@ -349,14 +393,14 @@ elif False:
         print("Mean",np.mean(np.arctanh(samples)), "var",np.var(np.arctanh(samples)), "MSE:",np.mean((np.arctanh(samples)-np.arctanh(rho))**2))
         print("Mean",np.mean(np.arctanh(dist_func(S1[i],S2[i],U1,U2))), "var",np.var(np.arctanh(dist_func(S1[i],S2[i],U1,U2))), "MSE:",np.mean((np.arctanh(dist_func(S1[i],S2[i],U1,U2))-np.arctanh(rho))**2))
 
-#        plt.figure(2)
-#        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
-#        plt.axvline(x=np.arctanh(rho), color="green")
-#        plt.hist(np.arctanh(samples), bins=100, density=True,label="samples")
-#        plt.hist(np.arctanh(dist_func(S1[i],S2[i],U1,U2)), bins=100, density=True, histtype="step",label="g(x)=x")
-#        plt.hist(np.arctanh((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step",label="g(x)=ln(x)")
-#        plt.legend()
-#        plt.show()
+        plt.figure(2)
+        plt.title("S1 "+str(S1[i])+", S2 "+str(S2[i]))
+        plt.axvline(x=np.arctanh(rho), color="green")
+        plt.hist(np.arctanh(samples), bins=100, density=True,label="samples")
+        plt.hist(np.arctanh(dist_func(S1[i],S2[i],U1,U2)), bins=100, density=True, histtype="step",label="g(x)=x")
+        plt.hist(np.arctanh((S1[i]*U2-S2[i]*U1)/(S1[i]*U2+S2[i]*U1)), bins=100, density=True, histtype="step",label="g(x)=ln(x)")
+        plt.legend()
+        plt.show()
 
     alphas = np.linspace(0,1,100)
 

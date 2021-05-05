@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 rho = 0.5
-dict = pickle.load(open("CD_samples/regtestcomposite051000.p","rb"))
+dict = pickle.load(open("CD_samples/jeffrey0991000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]
@@ -32,9 +32,19 @@ print("Mean f_var:", np.mean(properties[:,11]+2*rho*properties[:,10]-rho**2-prop
 
 n = len(samples)
 
-alphas = np.linspace(0, 1, 100)
+alphas = np.linspace(0, 1, 1000)
 confs_lower = np.array(
     [np.sum((samples < alpha)) / n for alpha in alphas])
+
+for i in range(len(alphas)):
+    print(alphas[i], confs_lower[i], confs_lower[i]-alphas[i], (confs_lower[i]-alphas[i])/alphas[i])
+
+plt.figure()
+plt.subplot(1,2,1)
+plt.plot(alphas, confs_lower-alphas)
+plt.subplot(1,2,2)
+plt.plot(alphas, (confs_lower-alphas)/alphas)
+plt.show()
 
 confs_both = np.array(
     [np.sum((samples < (1 + alpha) / 2) & (samples > (1 - alpha) / 2)) / n for alpha in alphas])
