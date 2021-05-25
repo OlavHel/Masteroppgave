@@ -33,7 +33,49 @@ def pos_distr(theta, x, n, X, Y):
 
     return f_x**n*1/(1-x**2)*(1-x**2)**(-n/2)*np.exp(-1/2*f_x/f_theta*(S1/(1+x)+S2/(1-x)))
 
+rho = -0.5
 
+n = 5
+data = np.random.multivariate_normal(mean=[0,0], cov=[[1,rho],[rho,1]],size=n)
+
+est = np.sum(data[:,0]*data[:,1])/np.sqrt(np.sum(data[:,0]**2)*np.sum(data[:,1]**2))
+
+plt.figure(1)
+plt.scatter(data[:,0], data[:,1])
+plt.show()
+
+est = 0.5
+
+print(est)
+
+m = 10000000
+
+new_data = np.random.multivariate_normal(mean=[0,0], cov=[[1,est],[est,1]],size=m)
+
+X1, Y1 = np.meshgrid(new_data[:,0], new_data[:,1])
+
+
+
+true_data = np.random.multivariate_normal(mean=[0,0], cov=[[1,rho],[rho,1]],size=m)
+
+
+
+plt.figure(2)
+plt.hist2d(true_data[:,0], true_data[:,1], bins=(100,100), density=True, cmap=plt.cm.Reds)
+plt.hist2d(new_data[:,0], new_data[:,1], bins=(100,100), density=True, cmap=plt.cm.Blues, )
+plt.colorbar()
+plt.scatter(data[:,0],data[:,1])
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+plt.text(-2, 2, r"$\rho=$"+str(rho), fontsize=14,
+        verticalalignment='top', bbox=props)
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.xlim(-3,3)
+plt.ylim(-3,3)
+plt.show()
+
+
+1/0
 
 theta_0 = 1
 rho = 0.5

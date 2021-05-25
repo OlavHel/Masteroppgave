@@ -2,20 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from posteriors import Posterior
 from MCMC_test2 import one_simulation, gen_data, posterior_distr
-from simulate_CD import one_simulate_1, one_simulate_2
+from simulate_CD import one_simulate_1, one_simulate_2, one_simulate_3
 from test_region import sim_pivot_diff, sim_any_pivot_g
+from loss_functions import *
 
-posterior_names = ["jeffrey"]
-posteriors  = [Posterior(name, lam=10**(-4)).norm_distribution for name in posterior_names]
+posterior_names = []#["jeffrey", "uniform", "PC", "new", "arcsine", "test"]
+posteriors  = []#[Posterior(name, lam=10**(-4)).norm_distribution for name in posterior_names]
 
-all_names = ["Diff"] #["CD1","CD2","Diff"]
-all_CDs = [sim_pivot_diff] #[one_simulate_1, one_simulate_2, sim_pivot_diff]
+all_names = ["CD1","CD2","Diff"]
+all_CDs = [one_simulate_1, one_simulate_2, one_simulate_3]
 
 print(all_names)
 print(all_CDs)
 
-n = 3
-rho = 0.3
+n = 20
+rho = 0.9
 
 m = 10000000
 
@@ -33,7 +34,10 @@ T2 = np.sum(X*Y)
 S1 = np.sum((X+Y)**2)
 S2 = np.sum((X-Y)**2)
 
-rhos = np.linspace(-0.9999, 0.9999, 100)
+rhos = np.linspace(-0.9999, 0.9999, 1000)
+
+for i in range(len(all_names)):
+    print(all_names[i], np.mean(z_transMSE(samples[i,:],rho)))
 
 plt.figure(1)
 plt.title(r"$S_1$="+str(S1)+r", $S_2$="+str(S2))

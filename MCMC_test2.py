@@ -138,11 +138,11 @@ def loccond(theta, x, n, X, Y):
 
 if __name__ == "__main__":
     if True:
-        poster = Posterior("fiduc_2",lam=10**(-4)).distribution
+        poster = Posterior("jeffrey",lam=10**(-4)).distribution
         distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster)
 
-        n = 3
-        rho = 0.5
+        n = 10
+        rho = 0.8
 
         m = 100000
         s2 = 0.01
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         pickle.dump({
             "samples": samples,
             "properties": properties
-            }, open("CD_samples/fiduc2051000.p", "wb")
+            }, open("CD_samples_n_10/jeffrey081000.p", "wb")
         )
 
         risks = np.mean(properties, axis=0)

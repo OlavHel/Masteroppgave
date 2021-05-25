@@ -13,7 +13,8 @@ class Posterior:
             "arcsine":self.arcsine,
             "new":self.new_one,
             "fiduc_2": self.fiducial_2,
-            "fiduc_infty": self.fiducial_infinity
+            "fiduc_infty": self.fiducial_infinity,
+            "test": self.testprior
         }
 
     def get_list_of_posteriors(self):
@@ -24,7 +25,8 @@ class Posterior:
             [3,"arcsine"],
             [4,"new"],
             [5,"fiducial 2"],
-            [6,"fiducial infinity"]
+            [6,"fiducial infinity"],
+            [7,"test"]
         ]
 
     def set_posterior(self,i,lam=10**(-1)):
@@ -35,7 +37,8 @@ class Posterior:
             3:"arcsine",
             4:"new",
             5:"fiduc_2",
-            6:"fiduc_infty"
+            6:"fiduc_infty",
+            7:"test"
         }[i]
 
     def distribution(self,rho,n,T1,T2):
@@ -78,7 +81,16 @@ class Posterior:
         return (S1/(1+rho)+S2/(1-rho))*(1-rho**2)**(-n/2)*np.exp(-1/4*(S1/(1+rho)+S2/(1-rho)))
 
 
-
+    def testprior(self, rho, n, T1, T2):
+        if type(rho) == type(np.array([0.1])) and len(rho) == 1:
+            rho = rho[0]
+        if type(rho) == type(np.array([])):
+            rho[rho <= -1] = 0
+            rho[rho >= 1] = 0
+        elif (rho <= (-1) or rho >= (1)):
+            return 0
+        temp = 1 - rho ** 2
+        return rho**2*temp ** (-n / 2) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
 
     def uniformprior(self,rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
@@ -142,47 +154,12 @@ class Posterior:
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    from finding_estimates import EstimatorClass
 
-    est_class = EstimatorClass()
-
-    n = 3
-    rho = 0.9
-    S1 = 2*n*(1+rho)#np.random.gamma(n/2,4*(1+rho))#
-    S2 = 2*n*(1-rho)#np.random.gamma(n/2,4*(1-rho))#
-
-    Xs = np.array([0.2, -0.39, -1.95])
-    Ys = np.array([1.08, 0.35, -0.4])
-
-    T1 = np.sum(Xs**2+Ys**2)
-    T2 = np.sum(Xs*Ys)
-
-    S1 = T1+2*T2
-    S2 = T1-2*T2
-
-    print(S1,S2)
-
-    mle = est_class.mle(Xs,Ys,n)
-
-    jeff = Posterior("jeffrey")
-    PC = Posterior("PC",lam=10**(-4))
-    unif = Posterior("uniform")
-    arcs = Posterior("arcsine")
-
-    distrs = [jeff,PC,unif,arcs]
-    labels = ["Jeffreys","PC, $\lambda=10^{-4}$","uniform","arcsine"]
-
-    rhos = np.linspace(-1+1/500,1-1/500,1000)
+    rhos = np.linspace(-1,1,100)
 
     plt.figure()
-    plt.title("n: "+str(n)+", S1: "+str(S1)+", S2: "+str(S2))
-    for i in range(len(distrs)):
-        distr = distrs[i]
-        plt.plot(rhos,distr.norm_distribution(rhos,n,T1,T2),label=labels[i])
-    plt.plot([mle,mle],[0,np.max([d.norm_distribution(mle,n,T1,T2) for d in distrs])],label="MLE")
-    plt.legend()
+    plt.plot(rhos, np.sqrt(1+rhos**2)/(1-rhos**2))
     plt.show()
-
 
 
 

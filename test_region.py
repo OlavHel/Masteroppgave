@@ -202,7 +202,6 @@ elif False:
     print(cums[:10])
 
     def g(x,a):
-#        print(x,a)
         return (4-S1/x)*((x+1)**a-1)
 
 
@@ -600,8 +599,8 @@ elif False:
     plt.show()
 
 
-elif False:
-    rho = 0.0
+elif True:
+    rho = 0.8
     n = 3
     n_samples = 1000
     n_MCMC = 100000
@@ -641,8 +640,8 @@ elif False:
         properties[i, :] = np.array([
             np.mean(samples),
             np.var(samples),
-            MAE(samples, rho),
-            MSE(samples, rho),
+                MAE(samples, rho),
+                MSE(samples, rho),
             np.mean(fisher_information_metric(samples, rho)),
             np.mean(kullback_leibler(samples, rho)),
             z_transMean(samples),
@@ -676,11 +675,11 @@ elif False:
 
     alphas = np.linspace(0, 1, 100)
 
-#    pickle.dump({
-#        "samples": all_samples,
-#        "properties": properties
-#    }, open("CD_samples/regtest1081000.p", "wb")
-#    )
+    pickle.dump({
+        "samples": all_samples,
+        "properties": properties
+    }, open("CD_samples/regtest1081000.p", "wb")
+    )
 
     print("FIM mean",np.mean(fisher_information_metric(rho, means)), "KL mean",np.mean(kullback_leibler(rho, means)),
           "MSE mean",np.mean((rho-means)**2), "z_MSE mean",np.mean((np.arctanh(rho)-np.arctanh(means))**2))
