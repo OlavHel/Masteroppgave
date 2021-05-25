@@ -14,6 +14,8 @@ class Posterior:
             "new":self.new_one,
             "fiduc_2": self.fiducial_2,
             "fiduc_infty": self.fiducial_infinity,
+            "fiduc_orig_2": self.fiducial_orig_2,
+            "fiduc_orig_infty": self.fiducial_orig_infinity,
             "test": self.testprior
         }
 
@@ -26,7 +28,9 @@ class Posterior:
             [4,"new"],
             [5,"fiducial 2"],
             [6,"fiducial infinity"],
-            [7,"test"]
+            [7,"fiducial original 2"],
+            [8, "fiducial original infinity"],
+            [9,"test"]
         ]
 
     def set_posterior(self,i,lam=10**(-1)):
@@ -38,7 +42,9 @@ class Posterior:
             4:"new",
             5:"fiduc_2",
             6:"fiduc_infty",
-            7:"test"
+            7:"fiduc_orig_2",
+            8:"fiduc_orig_infinity",
+            9:"test"
         }[i]
 
     def distribution(self,rho,n,T1,T2):
@@ -52,10 +58,44 @@ class Posterior:
         c, c_error = quad(distr, -1, 1, args=(n, T1, T2))
         return c
 
+    def fiducial_orig_2(self, rho, n, T1, T2):
+        if type(rho) == type(np.array([0.1])) and len(rho) == 1:
+            rho = rho[0]
+        if type(rho) == type(np.array([])):
+            rho[rho <= -1] = 0
+            rho[rho >= 1] = 0
+        elif (rho <= (-1) or rho >= (1)):
+            return 0
+
+        temp = np.sum(T1**2)+np.sum(T2**2)*rho**2-2*np.sum(T1*T2)*rho
+
+        S1 = np.sum((T1+T2)**2)
+        S2 = np.sum((T1-T2)**2)
+
+        return np.sqrt(temp)*(1-rho**2)**(-n/2-1)*np.exp(-1/4*(S1/(1+rho)+S2/(1-rho)))
+
+    def fiducial_orig_infinity(self, rho, n, T1, T2):
+        if type(rho) == type(np.array([0.1])) and len(rho) == 1:
+            rho = rho[0]
+        if type(rho) == type(np.array([])):
+            rho[rho <= -1] = 0
+            rho[rho >= 1] = 0
+            temp1 = np.outer(np.ones(len(rho)),T1)-np.outer(rho,T2)
+            temp = np.sum(np.abs(temp1),axis=1)
+        else:
+            if (rho <= (-1) or rho >= (1)):
+                return 0
+            temp = np.sum(np.abs(T1-rho*T2))
+
+
+        S1 = np.sum((T1 + T2) ** 2)
+        S2 = np.sum((T1 - T2) ** 2)
+
+        return temp * (1 - rho ** 2) ** (-n / 2 - 1) * np.exp(-1 / 4 * (S1 / (1 + rho) + S2 / (1 - rho)))
+
     def fiducial_2(self, rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
             rho = rho[0]
-        temp = 1 - rho ** 2
         if type(rho) == type(np.array([])):
             rho[rho <= -1] = 0
             rho[rho >= 1] = 0
@@ -101,7 +141,7 @@ class Posterior:
             rho[rho >= 1] = 0
         elif (rho <= (-1) or rho >= (1)):
             return 0
-        return np.exp(n / 1.1) * temp ** (-n / 2) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
+        return temp ** (-n / 2) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
 
     def jeffreys(self,rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
@@ -112,7 +152,7 @@ class Posterior:
             rho[rho >= 1] = 0
         elif (rho <= (-1) or rho >= (1)):
             return 0
-        return np.sqrt(1 + rho ** 2) / ((2 * np.pi) ** n * temp ** (n / 2 + 1)) * np.exp(
+        return np.sqrt(1 + rho ** 2) / (temp ** (n / 2 + 1)) * np.exp(
             -T1 / (2 * temp) + rho * T2 / temp)
 
     def PC(self,rho, n, T1, T2, lam): ## noe galt med PC
@@ -127,7 +167,7 @@ class Posterior:
         elif rho == 0:
             return lam
         temp = 1 - rho ** 2
-        return lam * np.abs(rho) / (temp ** (n / 2 + 1) * np.sqrt(-np.log(temp))) * \
+        return np.abs(rho) / (temp ** (n / 2 + 1) * np.sqrt(-np.log(temp))) * \
                np.exp(-T1 / (2 * temp) + rho * T2 / temp - lam * np.sqrt(-np.log(temp)))
 
     def arcsine(self,rho, n, T1, T2):
@@ -139,7 +179,7 @@ class Posterior:
         elif (rho <= (-1) or rho >= (1)):
             return 0
         temp = 1 - rho ** 2
-        return np.exp(n) / (temp ** (n / 2 + 1 / 2)) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
+        return 1 / (temp ** (n / 2 + 1 / 2)) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
 
     def new_one(self, rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
@@ -150,7 +190,7 @@ class Posterior:
         elif (rho <= (-1) or rho >= (1)):
             return 0
         temp = 1 - rho ** 2
-        return np.exp(n) / (temp ** (n / 2 + 1)) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
+        return 1 / (temp ** (n / 2 + 1)) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt

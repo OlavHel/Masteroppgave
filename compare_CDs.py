@@ -6,16 +6,17 @@ from simulate_CD import one_simulate_1, one_simulate_2, one_simulate_3
 from test_region import sim_pivot_diff, sim_any_pivot_g
 from loss_functions import *
 
-posterior_names = []#["jeffrey", "uniform", "PC", "new", "arcsine", "test"]
-posteriors  = []#[Posterior(name, lam=10**(-4)).norm_distribution for name in posterior_names]
+posterior_names = ["fiduc_orig_2", "fiduc_orig_infty","fiduc_2","fiduc_infty"]#["jeffrey", "uniform", "PC", "new", "arcsine", "test"]
+posteriors  = [Posterior(name, lam=10**(-4)).norm_distribution for name in posterior_names]
+posterior_input = [False, False, True, True]
 
-all_names = ["CD1","CD2","Diff"]
-all_CDs = [one_simulate_1, one_simulate_2, one_simulate_3]
+all_names = []#["CD1","CD2","Diff"]
+all_CDs = []#[one_simulate_1, one_simulate_2, one_simulate_3]
 
 print(all_names)
 print(all_CDs)
 
-n = 20
+n = 3
 rho = 0.9
 
 m = 10000000
@@ -39,13 +40,30 @@ rhos = np.linspace(-0.9999, 0.9999, 1000)
 for i in range(len(all_names)):
     print(all_names[i], np.mean(z_transMSE(samples[i,:],rho)))
 
+cj = Posterior("jeffrey").normalization(n, T1, T2)
+cn = Posterior("new").normalization(n, T1, T2)
+cu = Posterior("uniform").normalization(n, T1, T2)
+ca= Posterior("arcsine").normalization(n, T1, T2)
+cpc= Posterior("PC", lam=10**(-4)).normalization(n, T1, T2)
+
+print(cj, cn)
+test_rho = np.sqrt((cj/cn)**2-1)
+print(test_rho)
+print(cu, cn*(2-(cj/cn)**2))
+print(ca, cn*np.sqrt(2-(cj/cn)**2))
+print(cpc, cn*test_rho/np.sqrt(-np.log(1-test_rho**2)))
+
 plt.figure(1)
 plt.title(r"$S_1$="+str(S1)+r", $S_2$="+str(S2))
 #plt.subplot(1,2,1)
 for i in range(len(posterior_names)):
-    plt.plot(rhos, posteriors[i](rhos, n, T1, T2), label=posterior_names[i])
+    if posterior_input[i]:
+        plt.plot(rhos, posteriors[i](rhos, n, T1, T2), label=posterior_names[i])
+    else:
+        plt.plot(rhos, posteriors[i](rhos, n, X, Y), label=posterior_names[i])
 for i in range(len(all_names)):
     plt.hist(samples[i, :], bins = 1000, density = True, histtype = "step", label = all_names[i])
+#plt.axvline(x=np.sqrt((cj/cn)**2-1))
 plt.legend()
 #trans = np.arctanh
 #plt.subplot(1,2,2)

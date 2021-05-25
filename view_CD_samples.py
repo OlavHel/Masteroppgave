@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 rho = 0.5
-dict = pickle.load(open("CD_samples_n_3/jeffrey081000.p","rb"))
+dict = pickle.load(open("CD_samples/jeffrey0991000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]
@@ -35,6 +35,13 @@ n = len(samples)
 alphas = np.linspace(0, 1, 1000)
 confs_lower = np.array(
     [np.sum((samples < alpha)) / n for alpha in alphas])
+
+#plt.figure()
+#plt.subplot(1,2,1)
+#plt.plot(alphas, confs_lower-alphas)
+#plt.subplot(1,2,2)
+#plt.plot(alphas, (confs_lower-alphas)/alphas)
+#plt.show()
 
 confs_both = np.array(
     [np.sum((samples < (1 + alpha) / 2) & (samples > (1 - alpha) / 2)) / n for alpha in alphas])
