@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 rho = 0.5
-dict = pickle.load(open("CD_samples/jeffrey0991000.p","rb"))
+dict = pickle.load(open("CD_samples_n_3/fiducorg_2001000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]
@@ -51,7 +51,7 @@ confs_upper = np.array(
 
 plt.figure()
 plt.plot(alphas, confs_lower, label="lower confs")
-#plt.plot(alphas, confs_both, label="two-sided confs")
+plt.plot(alphas, confs_both, label="two-sided confs")
 #plt.plot(alphas, confs_upper, label="upper confs")
 plt.plot(alphas, alphas, label="linear")
 #plt.plot(np.linspace(0,1,50), confs_lower[50:100]-np.flip((confs_lower)[0:50]))
@@ -59,9 +59,9 @@ plt.legend()
 plt.show()
 
 if True:
-    prior_names = ["jeffrey", "PC10-4", "arcsine", "arctanh", "uniform"]
+    prior_names = ["fiduc2","fiducorg_2","fiducinf","fiducorginf"]#["jeffrey", "PC10-4", "arcsine", "arctanh", "uniform"]
 
-    rho = 0.8
+    rho = 0.0
 
     plt.figure(2)
     for name in prior_names:

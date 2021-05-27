@@ -8,8 +8,7 @@ def MAE(samples, theta = None):
         mean = np.mean(samples)
         return np.mean(np.abs(samples-mean))
     else:
-        squared_errors = (samples-theta)**2
-        return 1/N*np.sum(squared_errors)
+        return np.mean(np.abs(samples-theta))
 
 
 def MSE(samples, theta = None):
