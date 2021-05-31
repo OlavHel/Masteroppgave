@@ -6,12 +6,12 @@ from simulate_CD import one_simulate_1, one_simulate_2, one_simulate_3
 from test_region import sim_pivot_diff, sim_any_pivot_g
 from loss_functions import *
 
-posterior_names = ["fiduc_orig_2", "fiduc_orig_infty","fiduc_2","fiduc_infty"]#["jeffrey", "uniform", "PC", "new", "arcsine", "test"]
+posterior_names = ["jeffrey", "uniform", "PC", "arctanh", "arcsine"]#["fiduc_orig_2", "fiduc_orig_infty","fiduc_2","fiduc_infty"]["jeffrey", "uniform", "PC", "new", "arcsine", "test"]
 posteriors  = [Posterior(name, lam=10**(-4)).norm_distribution for name in posterior_names]
-posterior_input = [False, False, True, True]
+posterior_input = [True, True, True, True, True]#[False, False, True, True]
 
-all_names = []#["CD1","CD2","Diff"]
-all_CDs = []#[one_simulate_1, one_simulate_2, one_simulate_3]
+all_names = ["Diff"]#["CD1","CD2","Diff"]
+all_CDs = [one_simulate_3]#[one_simulate_1, one_simulate_2, one_simulate_3]
 
 print(all_names)
 print(all_CDs)
@@ -41,7 +41,7 @@ for i in range(len(all_names)):
     print(all_names[i], np.mean(z_transMSE(samples[i,:],rho)))
 
 cj = Posterior("jeffrey").normalization(n, T1, T2)
-cn = Posterior("new").normalization(n, T1, T2)
+cn = Posterior("arctanh").normalization(n, T1, T2)
 cu = Posterior("uniform").normalization(n, T1, T2)
 ca= Posterior("arcsine").normalization(n, T1, T2)
 cpc= Posterior("PC", lam=10**(-4)).normalization(n, T1, T2)
