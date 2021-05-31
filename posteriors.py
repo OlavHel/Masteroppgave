@@ -11,11 +11,13 @@ class Posterior:
             "PC":lambda x,n,T1,T2: self.PC(x,n,T1,T2,self.lam),
             "uniform":self.uniformprior,
             "arcsine":self.arcsine,
-            "new":self.new_one,
+            "arctanh":self.arctanh,
             "fiduc_2": self.fiducial_2,
             "fiduc_infty": self.fiducial_infinity,
             "fiduc_orig_2": self.fiducial_orig_2,
             "fiduc_orig_infty": self.fiducial_orig_infinity,
+            "fiduc_orig_2_new": self.fiducial_orig_2_new,
+            "fiduc_orig_infty_new": self.fiducial_orig_infinity_new,
             "test": self.testprior
         }
 
@@ -25,12 +27,14 @@ class Posterior:
             [1,"PC"],
             [2,"uniform"],
             [3,"arcsine"],
-            [4,"new"],
+            [4,"arctanh"],
             [5,"fiducial 2"],
             [6,"fiducial infinity"],
             [7,"fiducial original 2"],
             [8, "fiducial original infinity"],
-            [9,"test"]
+            [9, "fiducial original 2 new"],
+            [10, "fiducial original infinity new"],
+            [11,"test"]
         ]
 
     def set_posterior(self,i,lam=10**(-1)):
@@ -39,12 +43,14 @@ class Posterior:
             1:"PC",
             2:"uniform",
             3:"arcsine",
-            4:"new",
+            4:"arctanh",
             5:"fiduc_2",
             6:"fiduc_infty",
             7:"fiduc_orig_2",
             8:"fiduc_orig_infinity",
-            9:"test"
+            9: "fiduc_orig_2_new",
+            10: "fiduc_orig_infinity_new",
+            11:"test"
         }[i]
 
     def distribution(self,rho,n,T1,T2):
@@ -57,6 +63,42 @@ class Posterior:
         distr = self.distr[self.posterior]
         c, c_error = quad(distr, -1, 1, args=(n, T1, T2))
         return c
+
+    def fiducial_orig_2_new(self, rho, n, T1, T2):
+        if type(rho) == type(np.array([0.1])) and len(rho) == 1:
+            rho = rho[0]
+        if type(rho) == type(np.array([])):
+            rho[rho <= -1] = 0
+            rho[rho >= 1] = 0
+        elif (rho <= (-1) or rho >= (1)):
+            return 0
+
+
+        S1 = np.sum((T1+T2)**2)
+        S2 = np.sum((T1-T2)**2)
+
+        temp = (S1+S2)*rho**2-2*(S1-S2)*rho+(S1+S2)
+
+        return np.sqrt(temp)*(1-rho**2)**(-n/2-1)*np.exp(-1/4*(S1/(1+rho)+S2/(1-rho)))
+
+    def fiducial_orig_infinity_new(self, rho, n, T1, T2):
+        if type(rho) == type(np.array([0.1])) and len(rho) == 1:
+            rho = rho[0]
+        if type(rho) == type(np.array([])):
+            rho[rho <= -1] = 0
+            rho[rho >= 1] = 0
+            temp1 = np.outer(np.ones(len(rho)),T1)-np.outer(rho,T2)
+            temp2 = np.outer(np.ones(len(rho)),T2)-np.outer(rho,T1)
+            temp = np.sum(np.abs(temp1),axis=1)+np.sum(np.abs(temp2))
+        else:
+            if (rho <= (-1) or rho >= (1)):
+                return 0
+            temp = np.sum(np.abs(T1-rho*T2))+np.sum(np.abs(T2-rho*T1))
+
+        S1 = np.sum((T1 + T2) ** 2)
+        S2 = np.sum((T1 - T2) ** 2)
+
+        return temp * (1 - rho ** 2) ** (-n / 2 - 1) * np.exp(-1 / 4 * (S1 / (1 + rho) + S2 / (1 - rho)))
 
     def fiducial_orig_2(self, rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
@@ -181,7 +223,7 @@ class Posterior:
         temp = 1 - rho ** 2
         return 1 / (temp ** (n / 2 + 1 / 2)) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
 
-    def new_one(self, rho, n, T1, T2):
+    def arctanh(self, rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
             rho = rho[0]
         if type(rho) == type(np.array([])):
