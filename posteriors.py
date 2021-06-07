@@ -197,7 +197,7 @@ class Posterior:
         return np.sqrt(1 + rho ** 2) / (temp ** (n / 2 + 1)) * np.exp(
             -T1 / (2 * temp) + rho * T2 / temp)
 
-    def PC(self,rho, n, T1, T2, lam): ## noe galt med PC
+    def PC(self,rho, n, T1, T2, lam):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:
             rho = rho[0]
         if type(rho) == type(np.array([])):

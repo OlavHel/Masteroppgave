@@ -84,65 +84,15 @@ def posterior_distr(x, n, X, Y, post):
 
     return post(x, n, T1, T2)
 
-def taraldsen_dens(x, n, X, Y):
-    if type(x) == type(np.array([0.1])) and len(x) == 1:
-        x = x[0]
-    if type(x) == type(np.array([])):
-        x[x <= -1] = 0
-        x[x >= 1] = 0
-    elif (x <= (-1) or x >= (1)):
-        return 0
-
-    mu_X = np.sum(X)/n
-    mu_Y = np.sum(Y)/n
-
-    SSx = np.sum((X-mu_X)**2)
-    SSy = np.sum((Y-mu_Y)**2)
-    SSxy = np.sum((X-mu_X)*(Y-mu_Y))
-
-    r = SSxy/np.sqrt(SSx*SSy)
-
-    nu = n
-
-    c = nu*(nu-1)*gamma(nu-1)/(np.sqrt(2*np.pi)*gamma(nu+1/2))*(1-r**2)**((nu-1)/2)
-
-    return c*(1-x**2)**((nu-2)/2)*(1-x*r)**((1-2*nu)/2)*hyp2f1(3/2,-1/2,nu+1/2,(1+r*x)/2)
-
-
-def loccond(theta, x, n, X, Y):
-    if type(x) == type(np.array([0.1])) and len(x) == 1:
-        x = x[0]
-    if type(x) == type(np.array([])):
-        x[x <= -1] = 0
-        x[x >= 1] = 0
-    elif (x <= (-1) or x >= (1)):
-        return 0
-
-    S1 = np.sum((X + Y) ** 2)
-    S2 = np.sum((X - Y) ** 2)
-
-    if theta >= 1:
-        f_theta = (1 + theta) ** (1 / 2 + theta / 2)
-        f_x = (1 - x) ** (1 / 2 + theta / 2)
-    elif theta <= -1:
-        f_theta = (1 - theta) ** (1 / 2 - theta / 2)
-        f_x = (1 + x) ** (1 / 2 - theta / 2)
-    else:
-        f_theta = (1+theta)**(1/2+theta/2)*(1-theta)**(1/2-theta/2)
-        f_x = (1+x)**(1/2-theta/2)*(1-x)**(1/2+theta/2)
-
-    return f_x**n*1/(1-x**2)*(1-x**2)**(-n/2)*np.exp(-1/2*f_x/f_theta*(S1/(1+x)+S2/(1-x)))
-
-
 
 
 if __name__ == "__main__":
     if True:
-        poster = Posterior("arcsine",lam=10**(-4)).distribution
+        poster = Posterior("fiduc_2",lam=10**(-4)).distribution # MÅ FIKSE PC FOR n=20.
         distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster)
 
-        n = 20
-        rho = 0.0
+        n = 3
+        rho = 0.9
 
         m = 100000
         s2 = 0.01
@@ -155,7 +105,7 @@ if __name__ == "__main__":
         pickle.dump({
             "samples": samples,
             "properties": properties
-            }, open("CD_samples_n_20/arcsine001000.p", "wb")
+            }, open("CD_samples_n_3/fiduc2021000.p", "wb")
         )
 
         risks = np.mean(properties, axis=0)

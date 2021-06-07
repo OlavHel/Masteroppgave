@@ -50,8 +50,8 @@ def fishMSE(samples, theta):
     return MSE(f_samples, f_theta)
 
 
-def kullback_leibler(rho1, rho2):
-    return -1 / 2 * np.log((1 - rho1 ** 2) / (1 - rho2 ** 2)) + (1 - rho1 * rho2) / (1 - rho2 ** 2) - 1
+def kullback_leibler(rho, rho_hat):
+    return -1 / 2 * np.log((1 - rho ** 2) / (1 - rho_hat ** 2)) + (1 - rho * rho_hat) / (1 - rho_hat ** 2) - 1
 
 
 def fisher_information(x):
@@ -66,7 +66,27 @@ def fisher_information_metric(rho, rho_hat):
     return np.abs(fisher_information(rho) - fisher_information(rho_hat))
 
 
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    rhos = np.linspace(-0.9,0.99, 100)
+    rho = 0.9
 
+    loss_names = ["Squared error", "z-transformed squared error", "Fisher Information Metric", "Kullback-Leibler"]
+    loss_funcs = [lambda x, rho: (x-rho)**2, lambda x, rho: (np.arctanh(x)-np.arctanh(rho))**2, fisher_information_metric, kullback_leibler]
 
+    plt.figure()
+    for i in range(len(loss_funcs)):
+        plt.subplot(2,2,i+1)
+        plt.title(loss_names[i],fontsize=14)
+        plt.plot(rhos,loss_funcs[i](rho,rhos))
+        plt.xlabel(r"$\rho$", fontsize = 14)
+        plt.ylabel("loss", fontsize = 14)
+    plt.subplots_adjust(left=0.1,
+                        bottom=0.1,
+                        right=0.96,
+                        top=0.9,
+                        wspace=0.3,
+                        hspace=0.5)
+    plt.show()
 
 

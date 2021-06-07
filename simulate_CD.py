@@ -194,6 +194,126 @@ def mult_simulate_3(n_samples, sample_size, n_MCMC, rho):
     return all_samples, properties
 
 
+def one_simulate_4(X, Y, sample_size, n_MCMC):
+    gamma = np.prod((X+Y)**2/(X-Y)**2)
+    z1s = np.random.standard_normal((sample_size,n_MCMC))
+    z2s = np.random.standard_normal((sample_size,n_MCMC))
+    Z = np.prod(z1s**2/z2s**2,axis=0)
+
+    eta = (Z/gamma)**(1/sample_size)
+
+    samples = (1-eta)/(eta+1)
+
+    return samples
+
+def mult_simulate_4(n_samples, sample_size, n_MCMC, rho):
+    ## Create multiple simulations with different data set from the CF of rho given
+    ##      2 unknown variables (common variance + correlation).
+    ## The output consists of
+    ##      1. The number of samples below the known correlation for each simulation
+    ##      2. A vector with the mean and variance of each simulation
+
+    print("Simulating from CD4")
+
+    all_samples = np.empty(n_samples)
+
+    properties = np.empty((n_samples, 12))
+
+    for i in range(n_samples):
+        if i%100==0:
+            print(i)
+        X,Y = gen_data(sample_size, rho)
+
+        samples = one_simulate_4(X, Y, sample_size, n_MCMC)
+
+        plt.figure()
+        plt.hist(samples, bins = 100)
+        plt.show()
+        plt.figure()
+        plt.hist(np.arctanh(samples), bins=100)
+        plt.show()
+
+        properties[i,:] = np.array([
+            np.mean(samples),
+            np.var(samples),
+            MAE(samples,rho),
+            MSE(samples,rho),
+            np.mean(fisher_information_metric(samples,rho)),
+            np.mean(kullback_leibler(samples,rho)),
+            z_transMean(samples),
+            z_transMSE(samples,rho),
+            w_transMean(samples),
+            w_transMSE(samples, rho),
+            fishMean(samples),
+            fishMSE(samples,rho)
+        ])
+
+        num_below_rho = np.sum(samples < rho)
+
+        all_samples[i] = num_below_rho / n_MCMC
+
+    return all_samples, properties
+
+
+def one_simulate_5(X, Y, sample_size, n_MCMC):
+    gamma = np.sum((X+Y)**2/(X-Y)**2)
+    z1s = np.random.standard_normal((sample_size,n_MCMC))
+    z2s = np.random.standard_normal((sample_size,n_MCMC))
+    Z = np.sum(z1s**2/z2s**2,axis=0)
+
+    eta = Z/gamma
+
+    samples = (1-eta)/(eta+1)
+
+    return samples
+
+def mult_simulate_5(n_samples, sample_size, n_MCMC, rho):
+    ## Create multiple simulations with different data set from the CF of rho given
+    ##      2 unknown variables (common variance + correlation).
+    ## The output consists of
+    ##      1. The number of samples below the known correlation for each simulation
+    ##      2. A vector with the mean and variance of each simulation
+
+    print("Simulating from CD5")
+
+    all_samples = np.empty(n_samples)
+
+    properties = np.empty((n_samples, 12))
+
+    for i in range(n_samples):
+        if i%100==0:
+            print(i)
+        X,Y = gen_data(sample_size, rho)
+
+        samples = one_simulate_5(X, Y, sample_size, n_MCMC)
+
+#        plt.figure()
+#        plt.hist(samples, bins = 100)
+#        plt.show()
+#        plt.figure()
+#        plt.hist(np.arctanh(samples), bins=100)
+#        plt.show()
+
+        properties[i,:] = np.array([
+            np.mean(samples),
+            np.var(samples),
+            MAE(samples,rho),
+            MSE(samples,rho),
+            np.mean(fisher_information_metric(samples,rho)),
+            np.mean(kullback_leibler(samples,rho)),
+            z_transMean(samples),
+            z_transMSE(samples,rho),
+            w_transMean(samples),
+            w_transMSE(samples, rho),
+            fishMean(samples),
+            fishMSE(samples,rho)
+        ])
+
+        num_below_rho = np.sum(samples < rho)
+
+        all_samples[i] = num_below_rho / n_MCMC
+
+    return all_samples, properties
 
 
 
@@ -203,7 +323,7 @@ if __name__ == "__main__":
 
         rhos = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
         n = 3
-        CD_number = 3
+        CD_number = 5
 
         m = 100000
         s2 = 0.01
@@ -213,7 +333,7 @@ if __name__ == "__main__":
 
         for rho in rhos:
             print("rho",rho)
-            CD_list = [mult_simulate_1, mult_simulate_2, mult_simulate_3]
+            CD_list = [mult_simulate_1, mult_simulate_2, mult_simulate_3, mult_simulate_4, mult_simulate_5]
 
 
             # HER KAN DU VELGE FORDELING VED Å ENDRE 1 til 2 eller motsatt

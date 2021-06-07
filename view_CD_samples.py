@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-rho = 0.0
-dict = pickle.load(open("CD_samples_n_20/jeffrey081000.p","rb"))
+rho = 0.5
+dict = pickle.load(open("CD_samples_n_3/CD4041000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]
@@ -65,7 +65,7 @@ if True:
 
     plt.figure(2)
     for name in prior_names:
-        dict = pickle.load(open("CD_samples_n_10/"+name+f"{round(10*rho):02}" +
+        dict = pickle.load(open("CD_samples_n_20/"+name+f"{round(10*rho):02}" +
                                 "1000.p", "rb"))
 
         samples = dict["samples"]
@@ -83,5 +83,59 @@ if True:
     plt.ylabel("Error in coverage rate", fontsize=14)
     plt.legend(fontsize=16)
     plt.show()
+
+elif False:
+    prior_name = "uniform"
+    ns = ["3","10","20"]
+    rho = 0.0
+
+    plt.figure(2)
+    for m in ns:
+        dict = pickle.load(open("CD_samples_n_"+m+"/"+prior_name+f"{round(10*rho):02}" +
+                                "1000.p", "rb"))
+
+        samples = dict["samples"]
+        n = len(samples)
+
+        alphas = np.linspace(0, 1, 1000)
+        confs_lower = np.array(
+            [np.sum((samples < alpha)) / n for alpha in alphas])
+        confs_both = np.array(
+            [np.sum((samples < (1 + alpha) / 2) & (samples > (1 - alpha) / 2)) / n for alpha in alphas])
+
+        plt.plot(alphas, confs_both, label=m)
+    plt.plot(alphas, alphas,label="linear")
+    plt.xlabel(r"$\alpha$", fontsize=14)
+    plt.ylabel("Error in coverage rate", fontsize=14)
+    plt.legend(fontsize=16)
+    plt.show()
+
+elif True:
+    prior_name = "jeffrey"
+    m = "3"
+    rhos = [0.0, 0.5, 0.8]
+
+    plt.figure(2)
+    for rho in rhos:
+        dict = pickle.load(open("CD_samples_n_"+m+"/"+prior_name+f"{round(10*rho):02}" +
+                                "1000.p", "rb"))
+
+        samples = dict["samples"]
+        n = len(samples)
+
+        alphas = np.linspace(0, 1, 1000)
+        confs_lower = np.array(
+            [np.sum((samples < alpha)) / n for alpha in alphas])
+        confs_both = np.array(
+            [np.sum((samples < (1 + alpha) / 2) & (samples > (1 - alpha) / 2)) / n for alpha in alphas])
+
+        plt.plot(alphas, confs_both-alphas, label=rho)
+    plt.plot(alphas, alphas-alphas,label="linear")
+    plt.xlabel(r"$\alpha$", fontsize=14)
+    plt.ylabel("Error in coverage rate", fontsize=14)
+    plt.legend(fontsize=16)
+    plt.show()
+
+
 
 
