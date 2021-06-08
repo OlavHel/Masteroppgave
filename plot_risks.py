@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-folder = "CD_samples_n_3"
+folder = "CD_samples_n_20"
 
 rhos = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 CD_numbers = [1,2,3,4,5]

@@ -105,7 +105,7 @@ if __name__ == "__main__":
         pickle.dump({
             "samples": samples,
             "properties": properties
-            }, open("CD_samples_n_3/fiduc2021000.p", "wb")
+            }, open("CD_samples_n_3/fiduc2091000.p", "wb")
         )
 
         risks = np.mean(properties, axis=0)

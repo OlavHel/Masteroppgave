@@ -226,13 +226,6 @@ def mult_simulate_4(n_samples, sample_size, n_MCMC, rho):
 
         samples = one_simulate_4(X, Y, sample_size, n_MCMC)
 
-        plt.figure()
-        plt.hist(samples, bins = 100)
-        plt.show()
-        plt.figure()
-        plt.hist(np.arctanh(samples), bins=100)
-        plt.show()
-
         properties[i,:] = np.array([
             np.mean(samples),
             np.var(samples),
@@ -322,7 +315,7 @@ if __name__ == "__main__":
         import pickle
 
         rhos = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-        n = 3
+        n = 20
         CD_number = 5
 
         m = 100000

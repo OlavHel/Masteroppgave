@@ -10,8 +10,8 @@ posterior_names = []#["jeffrey", "uniform", "PC", "arctanh", "arcsine"]#["fiduc_
 posteriors  = [Posterior(name, lam=10**(-4)).norm_distribution for name in posterior_names]
 posterior_input = []#[True, True, True, True, True]#[False, False, True, True]
 
-all_names = ["CD1","CD2","Diff","CD4","CD5"]#["Diff"]#["CD1","CD2","Diff"]
-all_CDs = [one_simulate_1, one_simulate_2, one_simulate_3, one_simulate_4, one_simulate_5]#[one_simulate_3]#[one_simulate_1, one_simulate_2, one_simulate_3]
+all_names = ["Tarldsen-CD","CVCD","Diff","CD4"]#,"CD5"]#["Diff"]#["CD1","CD2","Diff"]
+all_CDs = [one_simulate_1, one_simulate_2, one_simulate_3, one_simulate_4]#, one_simulate_5]#[one_simulate_3]#[one_simulate_1, one_simulate_2, one_simulate_3]
 
 print(all_names)
 print(all_CDs)
@@ -19,7 +19,7 @@ print(all_CDs)
 n = 3
 rho = 0.5
 
-m = 10000000
+m = 1000000
 
 X, Y = gen_data(n,rho)
 
@@ -80,7 +80,7 @@ plt.title(r"$S_1$="+str(S1)+r", $S_2$="+str(S2))
 colors = ["red","blue","green","purple","orange"]
 for i in range(len(all_names)):
     plt.hist(samples[i, :], bins = 1000, density = True, histtype = "step", label = all_names[i])
-    plt.axvline(np.median(samples[i,:]),label="median "+ all_names[i],color=colors[i])
+#    plt.axvline(np.median(samples[i,:]),label="median "+ all_names[i],color=colors[i])
 plt.legend()
 plt.show()
 
