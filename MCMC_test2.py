@@ -92,7 +92,7 @@ if __name__ == "__main__":
         distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster)
 
         n = 3
-        rho = 0.9
+        rho = 0.7
 
         m = 100000
         s2 = 0.01
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         pickle.dump({
             "samples": samples,
             "properties": properties
-            }, open("CD_samples_n_3/fiduc2091000.p", "wb")
+            }, open("CD_samples_n_3/fiduc2071000.p", "wb")
         )
 
         risks = np.mean(properties, axis=0)
