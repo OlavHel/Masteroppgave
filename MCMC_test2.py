@@ -88,7 +88,7 @@ def posterior_distr(x, n, X, Y, post):
 
 if __name__ == "__main__":
     if True:
-        poster = Posterior("fiduc_2",lam=10**(-4)).distribution # MÅ FIKSE PC FOR n=20.
+        poster = Posterior("fiduc_infty",lam=10**(-4)).distribution # MÅ FIKSE PC FOR n=20.
         distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster)
 
         n = 3
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         pickle.dump({
             "samples": samples,
             "properties": properties
-            }, open("CD_samples_n_3/fiduc2071000.p", "wb")
+            }, open("CD_samples_n_3/fiducinf071000.p", "wb")
         )
 
         risks = np.mean(properties, axis=0)
