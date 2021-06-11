@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-rho = 0.5
-dict = pickle.load(open("CD_samples_n_3/CD4041000.p","rb"))
+rho = 0.0
+dict = pickle.load(open("CD_samples_n_3/fiducinf001000.p","rb"))
 
 samples = dict["samples"]
 properties = dict["properties"]

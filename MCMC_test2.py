@@ -91,22 +91,28 @@ if __name__ == "__main__":
         poster = Posterior("fiduc_infty",lam=10**(-4)).distribution # MÅ FIKSE PC FOR n=20.
         distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster)
 
-        n = 3
-        rho = 0.7
+        n = 10
+
+        rhos = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        dist_name = "fiducinf"
+        rho = 0.9
 
         m = 100000
         s2 = 0.01
         start = 0
 
-        n_samples = 1000
+        n_samples = 1
 
-        samples, properties = mult_simulations(n_samples, n, m, s2, start, distr, rho)
+        for rho in rhos:
+            samples, properties = mult_simulations(n_samples, n, m, s2, start, distr, rho)
 
-        pickle.dump({
-            "samples": samples,
-            "properties": properties
-            }, open("CD_samples_n_3/fiducinf071000.p", "wb")
-        )
+            rho_to_print = round(10*rho)
+            pickle.dump({
+                "samples": samples,
+                "properties": properties
+            }, open("CD_samples_n_"+str(n)+"/"+dist_name+
+                    f"{rho_to_print:02}" +
+                     "1000.p", "wb"))
 
         risks = np.mean(properties, axis=0)
         risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",

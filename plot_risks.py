@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-folder = "CD_samples_n_20"
+folder = "CD_samples_n_3"
 
 rhos = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 CD_numbers = [1,2,3,4,5]
@@ -40,18 +40,32 @@ for j in range(len(risks_of_interest)):
     plt.ylabel("risk", fontsize=20)
     for i in range(m):
         plt.plot(rhos, data[i,:,j], label = "CD"+str(i+1))
-if False:
-    fid_rhos = [0.0, 0.5, 0.8]
-    fid_data = np.empty((3,len(risks_of_interest)))
+if True:
+    fid_rhos = rhos
+    fid_data = np.empty((len(fid_rhos),len(risks_of_interest)))
     for i in range(len(fid_rhos)):
         dict = pickle.load(open(folder + "/" + "fiduc2"+f"{round(10*fid_rhos[i]):02}" +
                      "1000.p", "rb"))
         properties = dict["properties"]
         risks = np.mean(properties, axis=0)
-        data[i, :] = risks[risks_of_interest]
+        print(risks)
+        fid_data[i, :] = risks[risks_of_interest] # må fikse feil her
     for i in range(len(risks_of_interest)):
         plt.subplot(2,2,i+1)
-        plt.plot(fid_rhos, fid_data[:,i])
+        plt.plot(fid_rhos, fid_data[:,i],label="fiduc2")
+if True:
+    fid_rhos = rhos
+    fid_data = np.empty((len(fid_rhos),len(risks_of_interest)))
+    for i in range(len(fid_rhos)):
+        dict = pickle.load(open(folder + "/" + "fiducinf"+f"{round(10*fid_rhos[i]):02}" +
+                     "1000.p", "rb"))
+        properties = dict["properties"]
+        risks = np.mean(properties, axis=0)
+        print(risks)
+        fid_data[i, :] = risks[risks_of_interest] # må fikse feil her
+    for i in range(len(risks_of_interest)):
+        plt.subplot(2,2,i+1)
+        plt.plot(fid_rhos, fid_data[:,i],label="fiducinf")
 #plt.subplot_tool()
 plt.subplots_adjust(left=0.1,
                     bottom=0.1,
