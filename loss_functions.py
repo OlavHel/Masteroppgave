@@ -3,7 +3,6 @@ import numpy as np
 
 
 def MAE(samples, theta = None):
-    N = len(samples)
     if theta is None:
         mean = np.mean(samples)
         return np.mean(np.abs(samples-mean))
@@ -68,17 +67,20 @@ def fisher_information_metric(rho, rho_hat):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    rhos = np.linspace(-0.9,0.99, 100)
+    rhos = np.linspace(-0.99999,0.99999, 1000000)
     rho = 0.9
 
     loss_names = ["Squared error", "z-transformed squared error", "Fisher Information Metric", "Kullback-Leibler"]
     loss_funcs = [lambda x, rho: (x-rho)**2, lambda x, rho: (np.arctanh(x)-np.arctanh(rho))**2, fisher_information_metric, kullback_leibler]
+
+    lims = [[0,(-1-0.9)**2], [0,8], [0,3.4], [0,9]]
 
     plt.figure()
     for i in range(len(loss_funcs)):
         plt.subplot(2,2,i+1)
         plt.title(loss_names[i],fontsize=14)
         plt.plot(rhos,loss_funcs[i](rho,rhos))
+        plt.ylim(lims[i][0],lims[i][1])
         plt.xlabel(r"$\rho$", fontsize = 14)
         plt.ylabel("loss", fontsize = 14)
     plt.subplots_adjust(left=0.1,

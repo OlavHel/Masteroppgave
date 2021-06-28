@@ -3,6 +3,7 @@ from scipy.integrate import quad
 
 
 class Posterior:
+    # class for all the posteriors
     def __init__(self,posterior=None,lam=10**(-1)):
         self.posterior = posterior
         self.lam = lam
@@ -12,16 +13,16 @@ class Posterior:
             "uniform":self.uniformprior,
             "arcsine":self.arcsine,
             "arctanh":self.arctanh,
-            "fiduc_2": self.fiducial_2,
-            "fiduc_infty": self.fiducial_infinity,
-            "fiduc_orig_2": self.fiducial_orig_2,
-            "fiduc_orig_infty": self.fiducial_orig_infinity,
-            "fiduc_orig_2_new": self.fiducial_orig_2_new,
-            "fiduc_orig_infty_new": self.fiducial_orig_infinity_new,
-            "test": self.testprior
+            "fiduc_2": self.fiducial_2, # fiduc_2 for sufficient statistics
+            "fiduc_infty": self.fiducial_infinity, # fiduc_infinity for sufficient statistics
+            "fiduc_orig_2": self.fiducial_orig_2, # fiduc_2 for original data but not "symmetric"
+            "fiduc_orig_infty": self.fiducial_orig_infinity, # fiduc_infinity for original data but not "symmetric"
+            "fiduc_orig_2_new": self.fiducial_orig_2_new, ## fiduc_2 for original data and "symmetric"
+            "fiduc_orig_infty_new": self.fiducial_orig_infinity_new # fiduc_infinity for original data and "symmetric"
         }
 
     def get_list_of_posteriors(self):
+        # can be used to find the numbering to choose to set the posterior class in set_posterior
         return [
             [0,"jeffrey"],
             [1,"PC"],
@@ -32,12 +33,13 @@ class Posterior:
             [6,"fiducial infinity"],
             [7,"fiducial original 2"],
             [8, "fiducial original infinity"],
-            [9, "fiducial original 2 new"],
-            [10, "fiducial original infinity new"],
-            [11,"test"]
+            [9, "fiducial original 2 symmetric"],
+            [10, "fiducial original infinity symmetric"]
         ]
 
-    def set_posterior(self,i,lam=10**(-1)):
+    def set_posterior(self,i):
+        # can be used to set the posterior for the Posterior class
+        # for instance, i=1 makes the Posterior object work as the PC posterior
         self.posterior = {
             0:"jeffrey",
             1:"PC",
@@ -49,8 +51,7 @@ class Posterior:
             7:"fiduc_orig_2",
             8:"fiduc_orig_infinity",
             9: "fiduc_orig_2_new",
-            10: "fiduc_orig_infinity_new",
-            11:"test"
+            10: "fiduc_orig_infinity_new"
         }[i]
 
     def distribution(self,rho,n,T1,T2):
@@ -161,18 +162,6 @@ class Posterior:
         S2 = T1-2*T2
 
         return (S1/(1+rho)+S2/(1-rho))*(1-rho**2)**(-n/2)*np.exp(-1/4*(S1/(1+rho)+S2/(1-rho)))
-
-
-    def testprior(self, rho, n, T1, T2):
-        if type(rho) == type(np.array([0.1])) and len(rho) == 1:
-            rho = rho[0]
-        if type(rho) == type(np.array([])):
-            rho[rho <= -1] = 0
-            rho[rho >= 1] = 0
-        elif (rho <= (-1) or rho >= (1)):
-            return 0
-        temp = 1 - rho ** 2
-        return rho**2*temp ** (-n / 2) * np.exp(-T1 / (2 * temp) + rho * T2 / temp)
 
     def uniformprior(self,rho, n, T1, T2):
         if type(rho) == type(np.array([0.1])) and len(rho) == 1:

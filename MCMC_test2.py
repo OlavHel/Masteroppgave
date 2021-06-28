@@ -9,14 +9,15 @@ import time
 
 
 def one_simulation(n_MCMC, sample_size, X, Y, dens,s2,start):
+    # USE MCMC TO SIMULATE n_MCMC SAMPLES FROM THE DENSITY dens with n=sample_size and data X,Y.
     s = np.sqrt(s2)
-    data = np.empty(n_MCMC)
-    randoms = s*np.random.standard_normal(n_MCMC)
+    data = np.empty(n_MCMC) # the list of sampled values
+    randoms = s*np.random.standard_normal(n_MCMC) # proposal distribution is z_i=N(z_{i-1},s^2).
     unifs = np.random.uniform(0,1,n_MCMC)
 
     post = lambda x: dens(x, sample_size, X, Y)
 
-    sample = start
+    sample = start # the last sample
     for i in range(n_MCMC):
         new_guess = sample+randoms[i]
 
@@ -29,6 +30,7 @@ def one_simulation(n_MCMC, sample_size, X, Y, dens,s2,start):
     return data
 
 def gen_data(n,rho):
+    # generate n data points X,Y given correlation rho
     data = np.random.multivariate_normal(
         np.array([0, 0]),
         np.array([[1, rho], [rho, 1]]),
@@ -42,22 +44,23 @@ def gen_data(n,rho):
 
 
 def mult_simulations(n_samples,sample_size,n_MCMC,s2,start, dens, rho):
+    # Run n_samples MCMC simulations, calculate the CFD value at rho and the confidence loss for each simulation
     all_samples = np.empty(n_samples)
 
-    properties = np.empty((n_samples, 12))
+    properties = np.empty((n_samples, 12)) # list of all confidence losses and expected values for various parametrizations
 
-    start_time = time.time()
+    start_time = time.time() # to keep track of time
     prev_time = start_time
     for i in range(n_samples):
         print(i)
         print("time since start:",time.time()-start_time)
         print("last time:",time.time()-prev_time)
         prev_time = time.time()
-        X, Y = gen_data(sample_size,rho)
+        X, Y = gen_data(sample_size,rho) # generate data
         
-        samples = one_simulation(n_MCMC, sample_size, X, Y, dens, s2, start)
+        samples = one_simulation(n_MCMC, sample_size, X, Y, dens, s2, start) # run simulations
 
-        properties[i,:] = np.array([
+        properties[i,:] = np.array([ # calculate the loss and means
             np.mean(samples),
             np.var(samples),
             MAE(samples,rho),
@@ -72,13 +75,15 @@ def mult_simulations(n_samples,sample_size,n_MCMC,s2,start, dens, rho):
             fishMSE(samples,rho)
         ])
 
+        # calculate the CDF value at rho
         num_below_rho = np.sum(samples < rho)
-        
         all_samples[i] = num_below_rho / n_MCMC
     
     return all_samples, properties
 
 def posterior_distr(x, n, X, Y, post):
+    # a function used to generalize the structure of the functions above. Lets densities that uses statistics
+    # T1 and T2 to be used in the one_simulation function which uses data on the form (X,Y)
     T1 = np.sum(X**2+Y**2)
     T2 = np.sum(X*Y)
 
@@ -87,120 +92,34 @@ def posterior_distr(x, n, X, Y, post):
 
 
 if __name__ == "__main__":
-    if True:
-        poster = Posterior("fiduc_infty",lam=10**(-4)).distribution # MÅ FIKSE PC FOR n=20.
-        distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster)
+    # code for testing frequentistic coverage and calculating risks for a posterior or GFD under different correlations
+    prior_name = "fiduc_2" # the name of the "prior" to be used. Is linked to the names given in the Posterior class
+    poster = Posterior(prior_name,lam=10**(-4)).distribution
+    distr = lambda x, n, X, Y: posterior_distr(x, n, X, Y, poster) # make sure that the density can use original data
 
-        n = 10
+    n = 3 # number of data points in a data set
 
-        rhos = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-        dist_name = "fiducinf"
-        rho = 0.9
+    rhos = [0.9] # list of all correlations to simulate using
+    dist_name = "fiduc2" # name of the prior to be used when saving the results
 
-        m = 100000
-        s2 = 0.01
-        start = 0
+    m = 100000 # number of simulations in MCMC
+    s2 = 0.01 # variance for the proposal distribution of the MCMC
+    start = 0 # starting value for the MCMC
 
-        n_samples = 1
+    n_samples = 1000 # number of simulations to create
 
-        for rho in rhos:
-            samples, properties = mult_simulations(n_samples, n, m, s2, start, distr, rho)
+    for rho in rhos:
+        rho_to_print = round(10*rho)
+        print("Simulation of "+dist_name+" for rho="+str(rho_to_print))
+        samples, properties = mult_simulations(n_samples, n, m, s2, start, distr, rho)
 
-            rho_to_print = round(10*rho)
-            pickle.dump({
-                "samples": samples,
-                "properties": properties
-            }, open("CD_samples_n_"+str(n)+"/"+dist_name+
-                    f"{rho_to_print:02}" +
-                     "1000.p", "wb"))
-
-        risks = np.mean(properties, axis=0)
-        risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",
-                      "Mean z_MSE:", "Mean w_mean:", "Mean w_MSE:", "Mean f_mean:", "Mean f_MSE:"]
-        print("")
-
-        for i in range(len(risks)):
-            print(risk_names[i], risks[i])
-        print("")
-
-
-        print(samples)
-
-        print("for alpha=0.95")
-        print(np.sum(samples < 0.95)/n_samples)
-
-        print("for alpha=0.9")
-        print(np.sum(samples < 0.9)/n_samples)
-
-        print("for alpha=0.75")
-        print(np.sum(samples < 0.75)/n_samples)
-
-        print("for alpha=0.5")
-        print(np.sum(samples < 0.5)/n_samples)
-
-        alphas = np.linspace(0,1,100)
-        confs = np.array([np.sum((samples < 1-(1-alpha)/2) & (samples > (1-alpha)/2))/n_samples for alpha in alphas])
-
-        plt.figure()
-        plt.plot(alphas,confs, label="confs")
-        plt.plot(alphas,alphas, label="linear")
-        plt.legend()
-        plt.show()
-
-    elif True:
-        poster = Posterior("fiduc_infty",lam=10**(-4)).distribution
-        distr = lambda x, n, T1, T2: posterior_distr(x, n, T1, T2, poster)
-
-        n = 3
-        rho = 0.8
-
-        m = 100000
-        s2 = 0.01
-        start = 0
-
-        X, Y = gen_data(n,rho)
-
-        samples = one_simulation(m, n, X, Y, distr,s2,start)
-
-        def sym_test(samples, median = None):
-            if median is None:
-                median = np.median(samples)
-            plt.figure()
-            pos_samples = samples[samples >= median]
-            neg_samples = samples[samples < median]
-
-            plt.hist(2*median-pos_samples, bins=100,density=True, histtype="step")
-            plt.hist(neg_samples, bins=100,density=True, histtype="step")
-
-            plt.show()
-
-
-        f_samples = samples#np.arctanh(samples)#fisher_information(samples)
-        f_mean = np.mean(f_samples)
-        f_var = np.var(f_samples)
-        f_median = np.median(f_samples)
-
-#        sym_test(f_samples, f_median)
-
-        print(np.sum(f_samples - f_median))
-#        plt.figure(1)
-        a_list = np.linspace(0, 3 * np.sqrt(f_var), 100)
-        pos_side = np.array([np.sum((f_samples - f_mean) > a) for a in a_list])
-        neg_side = np.array([np.sum((f_samples - f_mean) < -a) for a in a_list])
-        #        plt.plot(a_list, pos_side)
-        #        plt.plot(a_list, neg_side)
-#        plt.plot(a_list, (pos_side - neg_side) / m)
-
-        plt.figure(2)
-        #        plt.hist(1/2*np.log((1+samples)/(1-samples)), density=True, bins=100)
-        plt.hist(f_samples, density=True, bins=100)
-        plt.axvline(x=fisher_information(rho), color="green")
-        plt.axvline(x=f_mean, color="red")
-        plt.axvline(x=f_median, color="yellow")
-
-        rhos = np.linspace(-0.99,0.99,100)
-#        plt.plot(rhos, distr(rhos,n, X, T))
-        plt.show()
+        # store the results in a pickle file
+        pickle.dump({
+            "samples": samples,
+            "properties": properties
+        }, open("CD_samples_n_"+str(n)+"/"+dist_name+
+                f"{rho_to_print:02}" +
+                 "1000.p", "wb"))
 
 
 

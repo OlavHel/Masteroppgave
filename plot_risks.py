@@ -2,14 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-folder = "CD_samples_n_3"
+# code for plotting the risks in the stored data
+
+folder = "CD_samples_n_20"
 
 rhos = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-CD_numbers = [1,2,3,4,5]
+CD_numbers = [1,2,3,4]
 
 n = len(rhos)
 m = len(CD_numbers)
 
+names = ["UVCD","CVCD", "DiffCD", "CD1"]
 files = [["/CD"+str(CD_numbers[j])+
                     f"{round(10*rhos[i]):02}" +
                      "1000.p" for i in range(n)] for j in range(m)]
@@ -18,7 +21,8 @@ files = [["/CD"+str(CD_numbers[j])+
 risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",
               "Mean z_MSE:", "Mean w_mean:", "Mean w_MSE:", "Mean f_mean:", "Mean f_MSE:"]
 
-risks_of_interest = [3,4,5,7]#,2,9,11]
+# the list of indexes for the risks to be visualized, see list risk_names
+risks_of_interest = [3,4,5,7]
 data = np.empty((m,n,len(risks_of_interest)))
 
 for i in range(m):
@@ -36,11 +40,12 @@ plt.figure()
 for j in range(len(risks_of_interest)):
     plt.subplot(2,2,j+1)
     plt.title(risk_names[risks_of_interest[j]], fontsize=20)
-    plt.xlabel(r"$\rho$", fontsize=20)
-    plt.ylabel("risk", fontsize=20)
+    plt.xlabel(r"$\rho$", fontsize=22)
+    plt.ylabel("risk", fontsize=22)
     for i in range(m):
-        plt.plot(rhos, data[i,:,j], label = "CD"+str(i+1))
+        plt.plot(rhos, data[i,:,j], label = names[i])
 if True:
+    # if the risk for the fiduc_2 should be added
     fid_rhos = rhos
     fid_data = np.empty((len(fid_rhos),len(risks_of_interest)))
     for i in range(len(fid_rhos)):
@@ -49,11 +54,12 @@ if True:
         properties = dict["properties"]
         risks = np.mean(properties, axis=0)
         print(risks)
-        fid_data[i, :] = risks[risks_of_interest] # må fikse feil her
+        fid_data[i, :] = risks[risks_of_interest]
     for i in range(len(risks_of_interest)):
         plt.subplot(2,2,i+1)
         plt.plot(fid_rhos, fid_data[:,i],label="fiduc2")
 if True:
+    # if the risk of fiduc_infinity should be added
     fid_rhos = rhos
     fid_data = np.empty((len(fid_rhos),len(risks_of_interest)))
     for i in range(len(fid_rhos)):
@@ -62,18 +68,17 @@ if True:
         properties = dict["properties"]
         risks = np.mean(properties, axis=0)
         print(risks)
-        fid_data[i, :] = risks[risks_of_interest] # må fikse feil her
+        fid_data[i, :] = risks[risks_of_interest]
     for i in range(len(risks_of_interest)):
         plt.subplot(2,2,i+1)
         plt.plot(fid_rhos, fid_data[:,i],label="fiducinf")
-#plt.subplot_tool()
 plt.subplots_adjust(left=0.1,
                     bottom=0.1,
                     right=0.9,
                     top=0.9,
                     wspace=0.2,
                     hspace=0.3)
-plt.legend(fontsize=16)#loc="center left", bbox_to_anchor=(1,0.5), fontsize=16)
+plt.legend(fontsize=16)
 plt.show()
 
 

@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from scipy.special import gamma
 from loss_functions import *
 
+# code for simulating exact confidence distributions using mode generating functions
+
 def gen_data(n, rho):
     # generate n data points given the correlation rho
     data = np.random.multivariate_normal(
@@ -17,7 +19,7 @@ def gen_data(n, rho):
 
 
 def one_simulate_1(X, Y, sample_size, n_MCMC):
-    ## simulate from the CF of rho given 3 unknown variables (2 variances + correlation)
+    ## simulate from UVCD
     u = np.random.chisquare(sample_size, n_MCMC)
     v = np.random.chisquare(sample_size - 1, n_MCMC)
 
@@ -38,8 +40,7 @@ def one_simulate_1(X, Y, sample_size, n_MCMC):
     return samples
 
 def mult_simulate_1(n_samples, sample_size, n_MCMC, rho):
-    ## Create multiple simulations with different data set from the CF of rho given
-    ##      3 unknown variables (2 variances + correlation).
+    ## Create multiple simulations with different data set from the UVCD
     ## The output consists of
     ##      1. The number of samples below the known correlation for each simulation
     ##      2. A vector with the mean and variance of each simulation
@@ -80,7 +81,7 @@ def mult_simulate_1(n_samples, sample_size, n_MCMC, rho):
 
 
 def one_simulate_2(X, Y, sample_size, n_MCMC):
-    ## simulate from the CF of rho given 2 unknown variables (common variance + correlation)
+    ## simulate from the CVCD
     S1 = np.sum((X+Y)**2)
     S2 = np.sum((X-Y)**2)
 
@@ -94,8 +95,7 @@ def one_simulate_2(X, Y, sample_size, n_MCMC):
     return samples
 
 def mult_simulate_2(n_samples, sample_size, n_MCMC, rho):
-    ## Create multiple simulations with different data set from the CF of rho given
-    ##      2 unknown variables (common variance + correlation).
+    ## Create multiple simulations with different data set from the CVCD.
     ## The output consists of
     ##      1. The number of samples below the known correlation for each simulation
     ##      2. A vector with the mean and variance of each simulation
@@ -136,7 +136,7 @@ def mult_simulate_2(n_samples, sample_size, n_MCMC, rho):
 
 
 def one_simulate_3(X, Y, sample_size, n_MCMC):
-    ## simulate from the CF of rho given 3 unknown variables (2 variances + correlation)
+    ## simulate from the DiffCD
     S1 = np.sum((X+Y)**2)
     S2 = np.sum((X-Y)**2)
 
@@ -152,8 +152,7 @@ def one_simulate_3(X, Y, sample_size, n_MCMC):
     return samples
 
 def mult_simulate_3(n_samples, sample_size, n_MCMC, rho):
-    ## Create multiple simulations with different data set from the CF of rho given
-    ##      3 unknown variables (2 variances + correlation).
+    ## Create multiple simulations with different data set from the DiffCD.
     ## The output consists of
     ##      1. The number of samples below the known correlation for each simulation
     ##      2. A vector with the mean and variance of each simulation
@@ -195,6 +194,7 @@ def mult_simulate_3(n_samples, sample_size, n_MCMC, rho):
 
 
 def one_simulate_4(X, Y, sample_size, n_MCMC):
+    # simulate from CD1
     gamma = np.prod((X+Y)**2/(X-Y)**2)
     z1s = np.random.standard_normal((sample_size,n_MCMC))
     z2s = np.random.standard_normal((sample_size,n_MCMC))
@@ -207,8 +207,7 @@ def one_simulate_4(X, Y, sample_size, n_MCMC):
     return samples
 
 def mult_simulate_4(n_samples, sample_size, n_MCMC, rho):
-    ## Create multiple simulations with different data set from the CF of rho given
-    ##      2 unknown variables (common variance + correlation).
+    ## Create multiple simulations with different data set from CD1
     ## The output consists of
     ##      1. The number of samples below the known correlation for each simulation
     ##      2. A vector with the mean and variance of each simulation
@@ -249,6 +248,7 @@ def mult_simulate_4(n_samples, sample_size, n_MCMC, rho):
 
 
 def one_simulate_5(X, Y, sample_size, n_MCMC):
+    # simulate from a CD not used further. It is the one similar to CD1, but using a sum instead of a product
     gamma = np.sum((X+Y)**2/(X-Y)**2)
     z1s = np.random.standard_normal((sample_size,n_MCMC))
     z2s = np.random.standard_normal((sample_size,n_MCMC))
@@ -261,8 +261,7 @@ def one_simulate_5(X, Y, sample_size, n_MCMC):
     return samples
 
 def mult_simulate_5(n_samples, sample_size, n_MCMC, rho):
-    ## Create multiple simulations with different data set from the CF of rho given
-    ##      2 unknown variables (common variance + correlation).
+    ## Create multiple simulations with different data set using one_simulate_5.
     ## The output consists of
     ##      1. The number of samples below the known correlation for each simulation
     ##      2. A vector with the mean and variance of each simulation
@@ -280,12 +279,6 @@ def mult_simulate_5(n_samples, sample_size, n_MCMC, rho):
 
         samples = one_simulate_5(X, Y, sample_size, n_MCMC)
 
-#        plt.figure()
-#        plt.hist(samples, bins = 100)
-#        plt.show()
-#        plt.figure()
-#        plt.hist(np.arctanh(samples), bins=100)
-#        plt.show()
 
         properties[i,:] = np.array([
             np.mean(samples),
@@ -312,11 +305,12 @@ def mult_simulate_5(n_samples, sample_size, n_MCMC, rho):
 
 if __name__ == "__main__":
     if True:
+        # code for simulating and calculating the risk for different exact confidence distributions
         import pickle
 
         rhos = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
         n = 20
-        CD_number = 5
+        CD_number = 5 # number using in functions one_simulate_... and mult_simulate_...
 
         m = 100000
         s2 = 0.01
@@ -340,101 +334,6 @@ if __name__ == "__main__":
             }, open("CD_samples_n_"+str(n)+"/CD"+str(CD_number)+
                     f"{rho_to_print:02}" +
                      "1000.p", "wb"))
-
-        risks = np.mean(properties, axis=0)
-        risk_names = ["Mean mean:", "Mean var:", "Mean MAE:", "Mean MSE:", "Mean FIM:", "Mean KLD:", "Mean z_mean:",
-                      "Mean z_MSE:", "Mean w_mean:", "Mean w_MSE:", "Mean f_mean:", "Mean f_MSE:"]
-
-        if len(risks) != len(risk_names):
-            print("Number of names and properties do not match!")
-            1 / 0
-
-        for i in range(len(risks)):
-            print(risk_names[i], risks[i])
-
-        print(samples)
-
-        print("for alpha=0.95")
-        print(np.sum(samples < 0.95) / n_samples)
-
-        print("for alpha=0.9")
-        print(np.sum(samples < 0.9) / n_samples)
-
-        print("for alpha=0.75")
-        print(np.sum(samples < 0.75) / n_samples)
-
-        print("for alpha=0.5")
-        print(np.sum(samples < 0.5) / n_samples)
-
-        print("Mean mean:", np.mean(properties[:,0]))
-        print("Mean var + var mean:", np.mean(properties[:,1]) + np.var(properties[:,0]))
-
-        alphas = np.linspace(0, 1, 100)
-        confs = np.array([np.sum(samples < alpha) / n_samples for alpha in alphas])
-
-        plt.figure()
-        plt.plot(alphas, confs, label="confs")
-        plt.plot(alphas, alphas, label="linear")
-        plt.legend()
-        plt.show()
-
-    elif True:
-        n = 3
-        rho = 0.5
-
-        m = 1000000
-        s2 = 0.01
-        start = 0
-
-        X, Y = gen_data(n, rho)
-
-        S1 = np.sum((X+Y)**2)
-        S2 = np.sum((X-Y)**2)
-
-        print("S_1",S1,"S_2",S2)
-
-        samples = one_simulate_2(X, Y, n, m)
-
-        def sym_test(samples, median = None):
-            if median is None:
-                median = np.median(samples)
-            plt.figure()
-            pos_samples = samples[samples >= median]
-            neg_samples = samples[samples < median]
-
-            plt.hist(2*median-pos_samples, bins=100,density=True, histtype="step")
-            plt.hist(neg_samples, bins=100,density=True, histtype="step")
-
-            plt.show()
-
-        f_samples = 2*np.arctanh(samples)#fisher_information(samples)
-        f_mean = np.mean(f_samples)
-        f_var = np.var(f_samples)
-        f_median = np.median(f_samples)
-
-        sym_test(f_samples, f_median)
-
-        print(np.sum(f_samples-f_median))
-
-        print((S1-S2)/(S2+S1),2*np.sum(X*Y)/np.sum(X**2+Y**2))
-
-        plt.figure(2)
-        #        plt.hist(1/2*np.log((1+samples)/(1-samples)), density=True, bins=100)
-        plt.hist(samples, density = True, bins = 100)
-        #        plt.hist(f_samples, density=True, bins=100)
-        plt.axvline(x = fisher_information(rho), color = "green")
-        plt.axvline(x = f_mean, color = "red")
-        plt.axvline(x = f_median, color = "yellow")
-        #        plt.axvline(x = np.log(S1/S2),color="green")
-        #        plt.axvline(x = (S1-S2)/(S2+S1), color="green")
-        #        plt.axvline(x = np.median(samples), color="red")
-
-        #        rhos = np.linspace(-0.99, 0.99, 100)
-        #        S1 = np.sum((X+Y)**2)
-        #        S2 = np.sum((X-Y)**2)
-        #        pdfs = 2*gamma(n)/(gamma(n/2)**2)*(S2/S1*(1+rhos)/(1-rhos))**(n/2-1)/(S2/S1*(1+rhos)/(1-rhos)+1)**(n)*1/(1-rhos)**2*S2/S1
-        #        plt.plot(rhos,pdfs)
-        plt.show()
 
 
 
